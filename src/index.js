@@ -4,15 +4,15 @@ import ReactDOM from 'react-dom/client';
 import {
     createBrowserRouter,
     RouterProvider,
-    Route,
 } from "react-router-dom";
 import './index.scss';
 import Error from './error';
 import Layer from './layer';
 import Stat from './routes/stat';
-import { TodosWithSubscription, action} from './routes/todos';
-import {Task, action as editAction, removeAction} from './routes/task';
-import { Category, categoryAction, removeCategory } from './routes/category';
+import TodosWithSubscription from './routes/todos';
+import Task from './routes/task';
+import Category from './routes/category';
+import { removeAction, editAction } from './routes/components/API';
 
 
 
@@ -32,7 +32,6 @@ const router = createBrowserRouter([
                     {
                         index: true,
                         element: <TodosWithSubscription />,
-                        action: action,
                     },
                     {
                         path: 'task/:taskId',
@@ -51,16 +50,16 @@ const router = createBrowserRouter([
                     {
                         path: 'category/:categoryId',
                         element: <Category />,
-                        action: categoryAction,
+                        action: editAction,
                     },
                     {
                         path: 'category/:categoryId/remove',
-                        action: removeCategory,
+                        action: removeAction,
                     },
                     {
                         path: 'category',
                         element: <Category />,
-                        action: categoryAction,
+                        action: editAction,
                     },
                 ],
             },

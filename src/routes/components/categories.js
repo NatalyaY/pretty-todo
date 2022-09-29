@@ -1,10 +1,16 @@
 'use strict';
 import React, { Fragment } from 'react'
-import {
-    Form
-} from "react-router-dom";
+import { Form } from "react-router-dom";
+import useTaskStatusesByDay from './useTaskStatuses';
 
-function Categories({ categories, removeCategory, changeActiveCategory, activeCategory }) {
+
+export default function Categories({ year, categories, tasks, month, activeDate, tasksPeriod, removeCategory, changeActiveCategory, activeCategory }) {
+
+    categories = categories.map((category) => {
+        category.todayTasks = useTaskStatusesByDay(year, month, activeDate, tasks, { key: 'categoryId', value: category.id }, tasksPeriod == 'date' ? true : false);
+        return category;
+    });
+
     return (
         <section>
             <div className="container">
@@ -68,7 +74,4 @@ function Category({ category, removeCategory, changeActiveCategory, activeCatego
         </li>
     )
 }
-
-
-export default Categories;
 

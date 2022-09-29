@@ -1,16 +1,35 @@
 'use strict';
 import React, { Component, useRef, useEffect, useState } from 'react'
 import withModal from './modal';
+import useTaskStatusesByDay from './useTaskStatuses';
 
 
-function Calendar({ days, month, activeDate, onDayClick, onMonthClick }) {
+export default function Calendar({ year, month, activeDate, activeCategory, tasks, onDayClick, onMonthClick }) {
     const monthsNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const [modalIsClosed, setmodalIsClosed] = useState(true);
 
     const openModal = (e) => {
         e.stopPropagation();
         setmodalIsClosed(!modalIsClosed);
     };
+
+    function getCalendarDays({ month, tasks, category }) {
+        let days = [];
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+            let day = {
+                id: '' + month + i,
+                number: i,
+                name: dayNames[new Date(year, month, i).getDay()],
+                tasks: useTaskStatusesByDay(year, month, i, tasks, category ? { key: 'categoryId', value: category } : null)
+            };
+            days.push(day);
+        };
+        return days;
+    }
+
+    const days = getCalendarDays({ month, tasks, category: (activeCategory == 0) ? null : activeCategory });
 
     return (
         <section>
@@ -115,6 +134,3 @@ class CalendarDay extends Component {
         );
     }
 }
-
-
-export default Calendar;

@@ -1,16 +1,9 @@
 'use strict';
-import React, { Component } from 'react'
-import { Link } from "react-router-dom";
-import {
-    Form,
-    redirect,
-} from "react-router-dom";
+import React, { Component, Fragment } from 'react'
+import { Form } from "react-router-dom";
 
-export async function action() {
-    return redirect('/task');
-}
 
-export class Tasks extends Component {
+export default class Tasks extends Component {
 
     constructor(props) {
         super(props);
@@ -34,12 +27,16 @@ export class Tasks extends Component {
     }
 
     render() {
-        const activeTasks = this.props.tasks ? this.props.tasks.filter(task => task.status != 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
-        const doneTasks = this.props.tasks ? this.props.tasks.filter(task => task.status == 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
+        let activeTasks = this.props.tasks ? this.props.tasks.filter(task => task.status != 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
+        let doneTasks = this.props.tasks ? this.props.tasks.filter(task => task.status == 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
+        activeTasks = { status: 'active', tasks: activeTasks };
+        doneTasks = { status: 'done', tasks: doneTasks };
+
         this.categoryColors = this.props.categories.reduce((acc, category) => {
             acc[category.id] = category.color;
             return acc;
         }, {});
+
         return (
             <section>
                 <div className="container">
@@ -47,38 +44,32 @@ export class Tasks extends Component {
                     <button onClick={() => this.props.changeTasksPeriod('date')}>День</button>
                     <button onClick={() => this.props.changeTasksPeriod('month')}>Месяц</button>
                     <button onClick={() => this.props.changeTasksPeriod('all')}>Все время</button>
-                    <Form method="post"><button type="submit">Добавить задачу</button></Form>
-                    <h2>Активные задачи</h2>
-                    <ul className='todo-tasks todo-tasks-active'>
-                        {activeTasks.length ? activeTasks.map((task) =>
-                            <Task
-                                task={task}
-                                key={task.id}
-                                removeTask={this.props.removeTask}
-                                color={this.categoryColors[task.categoryId]}
-                                showCheckbox={this.state.showCheckbox}
-                                changeTasksStatus={this.props.changeTasksStatus}
-                            />
+                    <Form action='task'><button type="submit">Добавить задачу</button></Form>
+                    {
+                        [activeTasks, doneTasks].map((el) =>
+                        (
+                            <Fragment key={el.status}>
+                                <h2>{(el.status == 'done') ? 'Завершенные задачи' : 'Активные задачи'}</h2>
+                                <ul className='todo-tasks todo-tasks-done'>
+                                    {
+                                        el.tasks.length ? el.tasks.map((task) =>
+                                            <Task
+                                                task={task}
+                                                key={task.id}
+                                                isDone={(el.status == 'done') ? true : false}
+                                                removeTask={this.props.removeTask}
+                                                color={this.categoryColors[task.categoryId]}
+                                                showCheckbox={this.state.showCheckbox}
+                                                changeTaskStatus={this.props.changeTaskStatus}
+                                            />
+                                        )
+                                            : <p>{(el.status == 'done') ? 'Нет завершенных задач' : 'Нет активных задач'}</p>
+                                    }
+                                </ul>
+                            </Fragment>
                         )
-                            : <p>Нет активных задач</p>
-                        }
-                    </ul>
-                    <h2>Завершенные задачи</h2>
-                    <ul className='todo-tasks todo-tasks-done'>
-                        {doneTasks.length ? doneTasks.map((task) =>
-                            <Task
-                                task={task}
-                                isDone='true'
-                                key={task.id}
-                                removeTask={this.props.removeTask}
-                                color={this.categoryColors[task.categoryId]}
-                                showCheckbox={this.state.showCheckbox}
-                                changeTasksStatus={this.props.changeTasksStatus}
-                            />
                         )
-                            : <p>Нет завершенных задач</p>
-                        }
-                    </ul>
+                    }
                 </div>
             </section>
         );
@@ -150,10 +141,10 @@ class Task extends Component {
                     <p>{this.props.task.description}</p>
                 </div>
                 {(this.props.showCheckbox || this.state.showCheckbox) &&
-                    <input onChange={() => this.props.changeTasksStatus(this.props.task.id)} type='checkbox' checked={this.props.isDone ? true : null} className='todo-task-checkbox'></input>
+                    <input onChange={() => this.props.changeTaskStatus(this.props.task.id)} type='checkbox' checked={this.props.isDone ? true : null} className='todo-task-checkbox'></input>
                 }
                 <div className='todo-task-btns'>
-                    <Link to={`/task/${this.props.task.id}`}><i className="fa-solid fa-pen-to-square todo-task-edit"></i></Link>
+                    <Form action={`/task/${this.props.task.id}`}><button type='submit' className="fa-solid fa-pen-to-square todo-task-edit"></button></Form>
                     <i className="fa-solid fa-xmark todo-task-delete" onClick={() => this.props.removeTask(this.props.task.id)}></i>
                 </div>
                 <div className='todo-task-timeAndCategory'>

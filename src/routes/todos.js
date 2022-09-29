@@ -2,85 +2,29 @@
 import React, { Component, Fragment } from 'react';
 import Calendar from './components/calendar';
 import Categories from './components/categories';
-import {Tasks, action} from './components/tasks';
+import Tasks from './components/tasks';
 import * as API from './components/API';
-export { action };
 
 
-export class Todos extends Component {
+class Todos extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tasks: [],
-            categories: [],
-            days: [],
-            filteredTasks: [],
             activeDate: new Date().getDate(),
             activeMonth: new Date().getMonth(),
             activeCategory: 0,
             tasksPeriod: 'date',
         };
         this.year = new Date().getFullYear();
-        this.dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        this.filteredTasks = [];
+
         this.changeActiveDate = this.changeActiveDate.bind(this);
         this.changeActiveMonth = this.changeActiveMonth.bind(this);
         this.removeCategory = this.removeCategory.bind(this);
         this.removeTask = this.removeTask.bind(this);
         this.changeActiveCategory = this.changeActiveCategory.bind(this);
         this.changeTasksPeriod = this.changeTasksPeriod.bind(this);
-        this.changeTasksStatus = this.changeTasksStatus.bind(this);
-    }
-
-    componentDidMount() {
-        const state = Object.assign({}, this.state);
-        state.tasks = API.getTasks();
-        const categories = API.getCategories();
-        state.categories = categories;
-        this.setCalculatedState(state);
-        this.setState(state);
-    }
-
-    update() {
-        const state = Object.assign({}, this.state);
-        state.tasks = this.props.tasks;
-        state.categories = this.props.categories;
-        this.setCalculatedState(state);
-        this.setState(state);
-    }
-
-    getTaskStatusesByDay(month, day, tasks, filterBy = null, period = true) {
-        if (!tasks || !tasks.length) {
-            return null;
-        };
-
-        const filteredTasks = period ? tasks.filter((task) => {
-            const date = typeof task.targetDate === 'string' ? new Date(Number(task.targetDate)).setHours(0, 0, 0, 0) : new Date(task.targetDate).setHours(0, 0, 0, 0);
-            const dayDate = new Date(this.year, month, day).getTime();
-            return date === dayDate;
-        }) : tasks;
-
-        let groupedTasks;
-
-        if (filterBy) {
-            groupedTasks = filteredTasks.filter(task => {
-                if ((filterBy.key == 'categoryId') && (filterBy.value == 0)) {
-                    return true;
-                } else {
-                    return task[filterBy.key] == filterBy.value;
-                };
-            });
-        } else {
-            groupedTasks = filteredTasks;
-        };
-
-        if (!groupedTasks.length) {
-            return null;
-        };
-
-        return groupedTasks.reduce((acc, task) => {
-            acc[task.status] = acc[task.status] + 1 || 1;
-            return acc;
-        }, {});
+        this.changeTaskStatus = this.changeTaskStatus.bind(this);
     }
 
     getFilteredTasks({ query = {}, tasks = this.state.tasks }) {
@@ -107,36 +51,10 @@ export class Todos extends Component {
         });
     }
 
-    getDaysInMonth(month) {
-        return new Date(this.year, month + 1, 0).getDate();
-    }
-
-    getDayName(day, month) {
-        return this.dayNames[new Date(this.year, month, day).getDay()];
-    }
-
-    getCalendarDays({ month = this.state.activeMonth, tasks = this.state.tasks, category = null }) {
-        let days = [];
-        for (let i = 1; i <= this.getDaysInMonth(month); i++) {
-            let day = {
-                id: '' + month + i,
-                number: i,
-                name: this.getDayName(i, month),
-                tasks: this.getTaskStatusesByDay(month, i, tasks, category ? { key: 'categoryId', value: category } : null)
-            };
-            days.push(day);
-        }
-        return days;
-    }
-
-    setCalculatedState(state) {
-        state.days = this.getCalendarDays({ month: state.activeMonth, tasks: state.tasks, category: (state.activeCategory == 0) ? null : state.activeCategory });
-        state.categories.map((category) => {
-            category.todayTasks = this.getTaskStatusesByDay(state.activeMonth, state.activeDate, state.tasks, { key: 'categoryId', value: category.id }, state.tasksPeriod == 'date' ? true : false);
-        });
+    setCalculatedState(state = this.state) {
         const tasksPeriodFilter = this.getTasksPeriodFilter(new Date(this.year, state.activeMonth, state.activeDate), state.tasksPeriod);
         const query = Object.assign({ categoryId: state.activeCategory }, tasksPeriodFilter);
-        state.filteredTasks = this.getFilteredTasks({ query, tasks: state.tasks });
+        this.filteredTasks = this.getFilteredTasks({ query, tasks: this.props.tasks });
     }
 
     changeActiveDate(date) {
@@ -163,30 +81,22 @@ export class Todos extends Component {
 
     removeCategory(id) {
         const state = Object.assign({}, this.state);
-        const index = state.categories.findIndex(category => category.id === id);
+        const index = this.props.categories.findIndex(category => category.id === id);
         if (index >= 0) {
             API.removeCategory(id);
-            state.categories.splice(index, 1);
-            state.tasks = [].concat(state.tasks).map(task => {
+            this.props.tasks.forEach((task) => {
                 if (task.categoryId == id) {
                     task.categoryId = null;
+                    API.editTask(task);
                 };
-                return task;
-            });
+            })
             state.activeCategory = 0;
             this.setState(state);
         }
     }
 
     removeTask(taskId) {
-        const state = Object.assign({}, this.state);
-        const index = state.tasks.findIndex(task => task.id === taskId);
-        if (index >= 0) {
-            API.removeTask(taskId);
-            state.tasks.splice(index, 1);
-            this.setCalculatedState(state);
-            this.setState(state);
-        };
+        API.removeTask(taskId);
     }
 
     changeActiveCategory(categoryId) {
@@ -211,44 +121,45 @@ export class Todos extends Component {
         this.setState(state);
     }
 
-    changeTasksStatus(taskId) {
-        const state = Object.assign({}, this.state);
+    changeTaskStatus(taskId) {
         API.changeTaskStatus(taskId);
-        state.tasks = API.getTasks();
-        this.setCalculatedState(state);
-        this.setState(state);
     }
 
     render() {
-        this.update();
+        this.setCalculatedState();
         return (
             <Fragment>
-                {this.state.days.length &&
-                    <Calendar
-                        month={this.state.activeMonth}
-                        activeDate={this.state.activeDate}
-                        onDayClick={this.changeActiveDate}
-                        onMonthClick={this.changeActiveMonth}
-                        days={this.state.days}
-                    /> || <p>Loading...</p>}
+                <Calendar
+                    year={this.year}
+                    month={this.state.activeMonth}
+                    activeDate={this.state.activeDate}
+                    activeCategory={this.state.activeCategory}
+                    onDayClick={this.changeActiveDate}
+                    onMonthClick={this.changeActiveMonth}
+                    tasks={this.props.tasks}
+                />
                 <Categories
-                    categories={this.state.categories}
+                    year={this.year}
+                    categories={this.props.categories}
+                    tasks={this.props.tasks}
+                    month={this.state.activeMonth}
+                    activeDate={this.state.activeDate}
+                    tasksPeriod={this.state.tasksPeriod}
                     removeCategory={this.removeCategory}
                     changeActiveCategory={this.changeActiveCategory}
                     activeCategory={this.state.activeCategory}
                 />
                 <Tasks
-                    tasks={this.state.filteredTasks}
+                    tasks={this.filteredTasks}
                     removeTask={this.removeTask}
-                    categories={this.state.categories}
+                    categories={this.props.categories}
                     changeTasksPeriod={this.changeTasksPeriod}
-                    changeTasksStatus={this.changeTasksStatus}
+                    changeTaskStatus={this.changeTaskStatus}
                 />
             </Fragment>
         )
     }
 }
 
-const TodosWithSubscription = API.withSubscription(Todos);
-export {TodosWithSubscription};
+export default API.withSubscription(Todos);
 

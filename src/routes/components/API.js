@@ -1,5 +1,6 @@
 'use strict';
 import React, { Component } from 'react';
+import { redirect } from 'react-router-dom';
 const event = new Event("change localstorage");
 
 export function getCategories() {
@@ -76,9 +77,7 @@ export function editTask(updates) {
     const index = tasks.findIndex(task => task.id === updates.id);
     if (index !== -1) {
         Object.keys(updates).forEach((key) => {
-            if (tasks[index].hasOwnProperty(key)) {
-                tasks[index][key] = updates[key];
-            };
+            tasks[index][key] = updates[key];
         });
         window.localStorage.setItem('tasks', JSON.stringify(tasks));
         window.dispatchEvent(event);
@@ -90,9 +89,7 @@ export function editCategory(updates) {
     const index = userCategories.findIndex(category => category.id === updates.id);
     if (index !== -1) {
         Object.keys(updates).forEach((key) => {
-            if (userCategories[index].hasOwnProperty(key)) {
-                userCategories[index][key] = updates[key];
-            };
+            userCategories[index][key] = updates[key];
         });
         window.localStorage.setItem('categories', JSON.stringify(userCategories));
         window.dispatchEvent(event);
@@ -121,6 +118,7 @@ export function changeTaskStatus(taskId) {
     };
 }
 
+
 export function withSubscription(Element) {
 
     return class extends Component {
@@ -135,7 +133,6 @@ export function withSubscription(Element) {
         }
 
         updateState() {
-            alert('Update state');
             this.setState({
                 categories: getCategories(),
                 tasks: getTasks(),
@@ -154,4 +151,47 @@ export function withSubscription(Element) {
             return <Element categories={this.state.categories} tasks={this.state.tasks} />
         }
     }
+}
+
+
+export function removeAction({ params, request }) {
+    const type = request.url.split('/')[3];
+    let id = type == 'category' ? Number(params.categoryId) || null : Number(params.taskId) || null;
+    if (id) {
+        if (type == 'category') {
+            removeCategory(id);
+        } else {
+            removeTask(id);
+        };
+    };
+    return redirect('/');
+}
+
+export async function editAction({ params, request }) {
+    const type = request.url.split('/')[3];
+    let id = type == 'category' ? Number(params.categoryId) || null : Number(params.taskId) || null;
+
+    const data = await request.formData();
+    const updates = Object.fromEntries(data);
+
+    if (type == 'task') {
+        updates.categoryId = Number(updates.categoryId);
+        updates.targetDate = Number(updates.targetDate);
+    };
+
+    if (id) {
+        updates.id = id;
+        if (type == 'category') {
+            editCategory(updates);
+        } else {
+            editTask(updates);
+        };
+    } else {
+        if (type == 'category') {
+            addCategory(updates);
+        } else {
+            addTask(updates);
+        };
+    };
+    return redirect('/');
 }
