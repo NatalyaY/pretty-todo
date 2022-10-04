@@ -9,20 +9,30 @@ export default function withModal(Element) {
         constructor(props) {
             super(props);
             this.onClick = this.onClick.bind(this);
+            this.scrollY = 0;
         }
 
-        onClick(e) {
+        onClick() {
             this.props.callback();
             document.removeEventListener('click', this.onClick);
+            document.documentElement.style.overflow = '';
+            window.scrollTo(0, this.scrollY);
         };
 
         componentDidMount() {
+            this.scrollY = window.scrollY;
+            document.documentElement.style.overflow = 'hidden';
             document.addEventListener('click', this.onClick);
         }
 
         render() {
             const { callback, ...passThroughProps } = this.props;
-            return <Element {...passThroughProps}/>
+            return (
+                <div className='popup'>
+                    <i className="fa-solid fa-xmark closeIcon"></i>
+                    <Element {...passThroughProps} />
+                </div>
+            )
         }
     }
 }

@@ -5,11 +5,11 @@ import {
     createBrowserRouter,
     RouterProvider,
 } from "react-router-dom";
-import './index.scss';
+import './scss/index.scss';
 import Error from './error';
 import Layer from './layer';
 import Stat from './routes/stat';
-import TodosWithSubscription from './routes/todos';
+import Todos from './routes/todos';
 import Task from './routes/task';
 import Category from './routes/category';
 import { removeAction, editAction } from './routes/components/API';
@@ -31,7 +31,11 @@ const router = createBrowserRouter([
                     },
                     {
                         index: true,
-                        element: <TodosWithSubscription />,
+                        element: <Todos />,
+                    },
+                    {
+                        path: 'tasks',
+                        element: <Todos />,
                     },
                     {
                         path: 'task/:taskId',

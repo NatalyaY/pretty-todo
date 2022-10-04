@@ -2,72 +2,85 @@
 import React, { Fragment } from 'react'
 import { Form } from "react-router-dom";
 import useTaskStatusesByDay from './useTaskStatuses';
+import Scrollable from './scrollable';
+
 
 
 export default function Categories({ year, categories, tasks, month, activeDate, tasksPeriod, removeCategory, changeActiveCategory, activeCategory }) {
 
     categories = categories.map((category) => {
-        category.todayTasks = useTaskStatusesByDay(year, month, activeDate, tasks, { key: 'categoryId', value: category.id }, tasksPeriod == 'date' ? true : false);
+        category.todayTasks = useTaskStatusesByDay({ year, month, day: activeDate, tasks, filterBy: { key: 'categoryId', value: category.id }, period: tasksPeriod });
         return category;
     });
 
     return (
         <section>
             <div className="container">
-                <ul className='todo-categories'>
-                    {categories.map((category) =>
-                        <Category category={category} key={category.id} removeCategory={removeCategory} changeActiveCategory={changeActiveCategory} activeCategory={activeCategory} />
-                    )
-                    }
-                    <Form action='category'><button type="submit">Добавить категорию</button></Form>
-                </ul>
+                <div className="card">
+                    <h2 className='heading--standart'>Категории:</h2>
+                    <Scrollable className='categories-container'>
+                        {categories.map((category) =>
+                            <Category
+                                category={category}
+                                key={category.id}
+                                removeCategory={removeCategory}
+                                changeActiveCategory={changeActiveCategory}
+                                isActive={category.id == activeCategory}
+                            />
+                        )
+                        }
+                        <Form action='category'><button type="submit" className='categories-addBtn btn btn--transparent btn--add'>Добавить категорию</button></Form>
+                    </Scrollable>
+                </div>
             </div>
         </section>
     )
 }
 
-function Category({ category, removeCategory, changeActiveCategory, activeCategory }) {
-    let className = 'todo-categories-category';
+function Category(props) {
+    let className = 'category scrollable-item';
 
-    if (category.id == activeCategory) {
-        className += ' active';
+    if (props.isActive) {
+        className += ' activeCategory';
     };
 
     function handleCategoryClick(e) {
-        if (e.target.classList.contains('todo-categories-category-delete')) {
-            removeCategory(category.id);
+        if (e.target.classList.contains('category-delete')) {
+            props.removeCategory(props.category.id);
         } else {
-            changeActiveCategory(category.id);
+            props.changeActiveCategory(props.category.id);
         }
     };
 
-    const style = { backgroundColor: category.color };
-    if (category.textColor) {
-        style.color = category.textColor;
+    const style = { backgroundColor: props.category.color, pointerEvents: `${props.pointerEvents}` };
+    if (props.category.textColor) {
+        style.color = props.category.textColor;
     };
 
     return (
         <li
             className={className} style={style} onClick={(e) => handleCategoryClick(e)}
         >
-            <span>{category.name}</span>
+            <div className="category-content">
+                <span>{props.category.name}</span>
+                {
+                    props.category.todayTasks ?
+                        <div className='tasksList'>
+                            {Object.keys(props.category.todayTasks).map((key) =>
+                            (
+                                <span key={key + props.category.id + ''} className={'tasksNumber ' + `${key}TasksNumber`}>{props.category.todayTasks[key]}</span>
+                            )
+                            )}
+                        </div>
+                        : null
+                }
+            </div>
             {
-                category.todayTasks ?
-                    <div className='todo-categories-category-tasks'>
-                        {Object.keys(category.todayTasks).map((key) =>
-                        (
-                            <span key={key + category.id + ''} className={'category-tasks ' + key}>{category.todayTasks[key]}</span>
-                        )
-                        )}
-                    </div>
-                    : null
-            }
-            {
-                category.isCustom &&
+                props.category.isCustom &&
                 (
-                    <div>
-                        <i className="fa-solid fa-xmark todo-categories-category-delete" onClick={(e) => handleCategoryClick(e)}></i>
-                        <Form action={`/category/${category.id}`}><button type="submit" className="fa-solid fa-pen-to-square todo-task-edit"></button></Form>
+                    <div className='category-btns'>
+                        <i className="fa-solid fa-trash category-delete deleteIcon" onClick={(e) => handleCategoryClick(e)}></i>
+                        <Form action={`/category/${props.category.id}`}><button type="submit" className="fa-solid fa-pen-to-square editIcon"></button></Form>
                     </div>
                 )
             }

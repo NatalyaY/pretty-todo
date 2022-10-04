@@ -7,22 +7,22 @@ export function getCategories() {
     if (!JSON.parse(window.localStorage.getItem('categories'))) {
         const categories = [
             {
-                id: 0, name: 'Все', color: 'gray'
+                id: 0, name: 'Все', color: 'gray', textColor: '#FAFAFA'
             },
             {
-                id: 1, name: 'Дом', color: 'blue'
+                id: 1, name: 'Дом', color: 'blue', textColor: '#FAFAFA'
             },
             {
-                id: 2, name: 'Семья', color: 'red'
+                id: 2, name: 'Семья', color: 'red', textColor: '#FAFAFA'
             },
             {
-                id: 3, name: 'Работа', color: 'orange'
+                id: 3, name: 'Работа', color: 'orange', textColor: '#FAFAFA'
             },
             {
-                id: 4, name: 'Спорт', color: 'green'
+                id: 4, name: 'Спорт', color: 'green', textColor: '#FAFAFA'
             },
             {
-                id: 5, name: 'Здоровье', color: 'violet'
+                id: 5, name: 'Здоровье', color: 'violet', textColor: '#FAFAFA'
             },
         ];
         window.localStorage.setItem('categories', JSON.stringify(categories));
@@ -141,10 +141,12 @@ export function withSubscription(Element) {
 
         componentDidMount() {
             window.addEventListener('change localstorage', this.updateState);
+            window.addEventListener('storage', this.updateState);
         }
 
         componentWillUnmount() {
             window.removeEventListener('change localstorage', this.updateState);
+            window.removeEventListener('storage', this.updateState);
         }
 
         render() {

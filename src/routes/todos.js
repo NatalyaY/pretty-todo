@@ -155,6 +155,7 @@ class Todos extends Component {
                     categories={this.props.categories}
                     changeTasksPeriod={this.changeTasksPeriod}
                     changeTaskStatus={this.changeTaskStatus}
+                    tasksPeriod={this.state.tasksPeriod}
                 />
             </Fragment>
         )

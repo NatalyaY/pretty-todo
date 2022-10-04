@@ -1,6 +1,10 @@
 'use strict';
 import React, { Component, Fragment } from 'react'
 import { Form } from "react-router-dom";
+import {
+    CSSTransition,
+    TransitionGroup,
+} from 'react-transition-group';
 
 
 export default class Tasks extends Component {
@@ -9,14 +13,13 @@ export default class Tasks extends Component {
         super(props);
         this.state = {
             showCheckbox: window.innerWidth <= 768,
+            timeToUpdate: '',
         };
         this.handleResize = this.handleResize.bind(this);
         this.categoryColors = {};
+        this.timer = null;
     }
 
-    handleResize() {
-        this.setState({ showCheckbox: window.innerWidth <= 768 });
-    }
 
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
@@ -24,14 +27,54 @@ export default class Tasks extends Component {
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
+        this.timer = null;
     }
 
-    render() {
-        let activeTasks = this.props.tasks ? this.props.tasks.filter(task => task.status != 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
-        let doneTasks = this.props.tasks ? this.props.tasks.filter(task => task.status == 'done').sort((a, b) => a.targetDate - b.targetDate) : [];
-        activeTasks = { status: 'active', tasks: activeTasks };
-        doneTasks = { status: 'done', tasks: doneTasks };
+    handleResize() {
+        this.setState({ showCheckbox: window.innerWidth <= 768 });
+    }
 
+    getTime(task) {
+        const dateDiff = Math.floor((task.targetDate - Date.now()) / 1000);
+        if ((dateDiff <= 0) && !task.timeIsEnd) {
+            task.time = "00д.:00ч.:00м.:00с.";
+            task.timeIsEnd = true;
+            return task;
+        };
+        let days = ('0' + Math.floor(dateDiff / (60 * 60 * 24))).slice(-2);
+        let hours = ('0' + Math.floor(dateDiff % (60 * 60 * 24) / (60 * 60))).slice(-2);
+        let minutes = ('0' + Math.floor(dateDiff % (60 * 60) / 60)).slice(-2);
+        let seconds = ('0' + Math.ceil(dateDiff % (60 * 60) % 60)).slice(-2);
+        task.time = (days != '00') ? `${days}д.:${hours}ч.:${minutes}м.` : `${hours}ч.:${minutes}м.:${seconds}с.`;
+        return task;
+    }
+
+    setTimer() {
+        this.timer = setTimeout(() => {
+            this.setState({
+                timeToUpdate: '',
+            });
+        }, 1000);
+    };
+
+    render() {
+        let activeTasks = [];
+        let doneTasks = [];
+        if (this.props.tasks) {
+            activeTasks = this.props.tasks.filter(task => task.status != 'done').sort((a, b) => a.targetDate - b.targetDate);
+            doneTasks = this.props.tasks.filter(task => task.status == 'done').sort((a, b) => a.targetDate - b.targetDate);
+            activeTasks.map((task) => {
+                if (!task.timeIsEnd) {
+                    this.getTime(task);
+                };
+            });
+            if (activeTasks.length && activeTasks.filter(task => task.timeIsEnd).length != activeTasks.length) {
+                this.setTimer();
+            };
+        };
+
+        activeTasks = { status: 'active', tasks: activeTasks.map((task) => { task.ref = React.createRef(); return task; }), noDataref: React.createRef() };
+        doneTasks = { status: 'done', tasks: doneTasks.map((task) => { task.ref = React.createRef(); return task; }), noDataref: React.createRef() };
         this.categoryColors = this.props.categories.reduce((acc, category) => {
             acc[category.id] = category.color;
             return acc;
@@ -40,120 +83,149 @@ export default class Tasks extends Component {
         return (
             <section>
                 <div className="container">
-                    <h1>Мои задачи</h1>
-                    <button onClick={() => this.props.changeTasksPeriod('date')}>День</button>
-                    <button onClick={() => this.props.changeTasksPeriod('month')}>Месяц</button>
-                    <button onClick={() => this.props.changeTasksPeriod('all')}>Все время</button>
-                    <Form action='task'><button type="submit">Добавить задачу</button></Form>
-                    {
-                        [activeTasks, doneTasks].map((el) =>
-                        (
-                            <Fragment key={el.status}>
-                                <h2>{(el.status == 'done') ? 'Завершенные задачи' : 'Активные задачи'}</h2>
-                                <ul className='todo-tasks todo-tasks-done'>
-                                    {
-                                        el.tasks.length ? el.tasks.map((task) =>
-                                            <Task
-                                                task={task}
-                                                key={task.id}
-                                                isDone={(el.status == 'done') ? true : false}
-                                                removeTask={this.props.removeTask}
-                                                color={this.categoryColors[task.categoryId]}
-                                                showCheckbox={this.state.showCheckbox}
-                                                changeTaskStatus={this.props.changeTaskStatus}
-                                            />
-                                        )
-                                            : <p>{(el.status == 'done') ? 'Нет завершенных задач' : 'Нет активных задач'}</p>
-                                    }
-                                </ul>
-                            </Fragment>
-                        )
-                        )
-                    }
+                    <div className="card">
+                        <div className="tasks-header">
+                            <h1>Мои задачи</h1>
+                            <div className="tasks-header-periodBtns">
+                                <button
+                                    onClick={() => this.props.changeTasksPeriod('date')}
+                                    className={'link' + (this.props.tasksPeriod == 'date' ? ' active' : '')}
+                                >
+                                    День
+                                </button>
+                                <button
+                                    onClick={() => this.props.changeTasksPeriod('month')}
+                                    className={'link' + (this.props.tasksPeriod == 'month' ? ' active' : '')}
+                                >
+                                    Месяц
+                                </button>
+                                <button
+                                    onClick={() => this.props.changeTasksPeriod('all')}
+                                    className={'link' + (this.props.tasksPeriod == 'all' ? ' active' : '')}
+                                >
+                                    Все время
+                                </button>
+                            </div>
+                            <Form action='task'><button type="submit" className='addBtn btn btn--colored btn--add'>Добавить задачу</button></Form>
+                        </div>
+                        {
+                            [activeTasks, doneTasks].map((el) =>
+                            (
+                                <div key={el.status} className='tasks-group'>
+                                    <h2 className='heading--standart'>{(el.status == 'done') ? 'Завершенные задачи' : 'Активные задачи'}</h2>
+                                    <TransitionGroup className="tasks-list" component='ul'>
+                                        {
+                                            el.tasks.length ? el.tasks.map((task) =>
+                                                <CSSTransition
+                                                    key={task.id}
+                                                    nodeRef={task.ref}
+                                                    timeout={200}
+                                                    classNames="item"
+                                                >
+                                                    <Task
+                                                        ref={task.ref}
+                                                        task={task}
+                                                        time={task.time}
+                                                        timeIsEnd={task.timeIsEnd}
+                                                        isDone={(el.status == 'done') ? true : false}
+                                                        removeTask={this.props.removeTask}
+                                                        color={task.categoryId == 0 ? null : this.categoryColors[task.categoryId]}
+                                                        showCheckbox={this.state.showCheckbox}
+                                                        changeTaskStatus={this.props.changeTaskStatus}>
+                                                    </Task>
+                                                </CSSTransition>
+                                            )
+                                                :
+                                                <CSSTransition
+                                                    key={el.status}
+                                                    nodeRef={el.noDataref}
+                                                    timeout={200}
+                                                    classNames="item"
+                                                >
+                                                    <p ref={el.noDataref} className='noData'>{(el.status == 'done') ? 'Нет завершенных задач' : 'Нет активных задач'}</p>
+                                                </CSSTransition>
+
+                                        }
+                                    </TransitionGroup>
+                                </div>
+                            )
+                            )
+                        }
+                    </div>
                 </div>
             </section>
         );
     }
 }
 
-class Task extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            time: this.getTime(),
-            isEnd: false,
-            showCheckbox: false,
-        };
-        this.timer = null;
-        this.setTime = this.setTime.bind(this);
-    }
+const Task = React.forwardRef((props, ref) => {
+    const [isHovered, setIsHovered] = React.useState(false);
+    const checkboxRef = React.useRef();
+    const taskContentRef = React.useRef();
 
-    getTime() {
-        const dateDiff = Math.floor((this.props.task.targetDate - Date.now()) / 1000);
-        if (dateDiff <= 0) {
-            return "0д.:0ч.:0м.:0с.";
-        };
-        let days = Math.floor(dateDiff / (60 * 60 * 24));
-        let hours = Math.floor(dateDiff % (60 * 60 * 24) / (60 * 60));
-        let minutes = Math.floor(dateDiff % (60 * 60) / 60);
-        let seconds = Math.ceil(dateDiff % (60 * 60) % 60);
-        return days ? `${days}д.:${hours}ч.:${minutes}м.` : `${hours}ч.:${minutes}м.:${seconds}с.`;
-    }
-
-    setTime() {
-        if (Math.floor((this.props.task.targetDate - Date.now()) / 1000) <= 0) {
-            this.timer = null;
-            this.setState({
-                isEnd: true,
-            });
+    const handleTaskClick = (e) => {
+        if (e.target.classList.contains('deleteIcon')) {
+            props.removeTask(props.task.id);
+        } else if (e.target.classList.contains('editIcon')) {
             return;
-        };
-        this.setState({
-            time: this.getTime(),
-        });
-        this.timer = setTimeout(this.setTime, 1000);
-    }
-
-    componentDidMount() {
-        if (!this.props.isDone) {
-            this.timer = setTimeout(this.setTime, 1000);
+        } else {
+            props.changeTaskStatus(props.task.id);
         }
-    }
+    };
 
-    componentWillUnmount() {
-        this.timer = null;
-    }
-
-    showCheckbox(state) {
-        if (this.props.showCheckbox) return;
-        this.setState({ showCheckbox: state });
-    }
-
-    render() {
-        return (
-            <li
-                className={'todo-task' + (this.state.isEnd ? ' end' : '') + (this.props.isDone ? ' done' : '')}
-                onPointerEnter={(e) => this.showCheckbox(true)}
-                onPointerLeave={(e) => this.showCheckbox(false)}
+    return (
+        <li
+            ref={ref}
+            className={'task bordered' + (props.timeIsEnd && !props.isDone ? ' end' : '') + (props.isDone ? ' done' : '')}
+            onPointerEnter={props.showCheckbox ? null : () => setIsHovered(true)}
+            onPointerLeave={props.showCheckbox ? null : () => setIsHovered(false)}
+            onClick={(e) => handleTaskClick(e)}
+        >
+            {
+                <CSSTransition
+                    in={(props.showCheckbox || isHovered)}
+                    nodeRef={checkboxRef}
+                    timeout={400}
+                    classNames="fadein"
+                    unmountOnExit
+                >
+                    <div
+                        checked={props.isDone ? true : null}
+                        className={'task-checkbox customCheckbox' + (props.isDone ? ' checked' : '')}
+                        ref={checkboxRef}
+                    >
+                        <i className="fa-solid fa-check checkbox-mark"></i>
+                    </div>
+                </CSSTransition>
+            }
+            <CSSTransition
+                in={(props.showCheckbox || isHovered)}
+                nodeRef={taskContentRef}
+                timeout={200}
+                classNames="marginLeft"
             >
-                <div className='todo-task-data'>
-                    <h3>{this.props.task.name}</h3>
-                    <p>{this.props.task.description}</p>
+                <div className={"task-content" + (props.showCheckbox ? ' ml30' : '')} ref={taskContentRef}>
+                    <div className="task-mainData">
+                        <div className='task-info'>
+                            <p>{props.task.name}</p>
+                            {props.task.description != '' ?
+                                <p>{props.task.description}</p>
+                                : null
+                            }
+                        </div>
+                        <div className='task-btns'>
+                            <Form action={`/task/${props.task.id}`}><button type='submit' className="fa-solid fa-pen-to-square todo-task-edit editIcon"></button></Form>
+                            <i className="fa-solid fa-trash deleteIcon"></i>
+                        </div>
+                    </div>
+                    <div className='task-timeAndCategory'>
+                        {!props.isDone && <p>{props.time}</p>}
+                        {props.color && <div className='task-category' style={{ backgroundColor: props.color }}></div>}
+                    </div>
                 </div>
-                {(this.props.showCheckbox || this.state.showCheckbox) &&
-                    <input onChange={() => this.props.changeTaskStatus(this.props.task.id)} type='checkbox' checked={this.props.isDone ? true : null} className='todo-task-checkbox'></input>
-                }
-                <div className='todo-task-btns'>
-                    <Form action={`/task/${this.props.task.id}`}><button type='submit' className="fa-solid fa-pen-to-square todo-task-edit"></button></Form>
-                    <i className="fa-solid fa-xmark todo-task-delete" onClick={() => this.props.removeTask(this.props.task.id)}></i>
-                </div>
-                <div className='todo-task-timeAndCategory'>
-                    {!this.props.isDone && <p>{this.state.time}</p>}
-                    {this.props.color && <div className='todo-task-category' style={{ backgroundColor: this.props.color }}></div>}
-                </div>
-            </li>
-        );
-    }
-}
+            </CSSTransition>
+        </li>
+    )
+});
 
 

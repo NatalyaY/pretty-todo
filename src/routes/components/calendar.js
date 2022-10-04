@@ -1,7 +1,8 @@
 'use strict';
-import React, { Component, useRef, useEffect, useState } from 'react'
+import React, { Component, useState } from 'react';
 import withModal from './modal';
 import useTaskStatusesByDay from './useTaskStatuses';
+import Scrollable from './scrollable';
 
 
 export default function Calendar({ year, month, activeDate, activeCategory, tasks, onDayClick, onMonthClick }) {
@@ -22,7 +23,7 @@ export default function Calendar({ year, month, activeDate, activeCategory, task
                 id: '' + month + i,
                 number: i,
                 name: dayNames[new Date(year, month, i).getDay()],
-                tasks: useTaskStatusesByDay(year, month, i, tasks, category ? { key: 'categoryId', value: category } : null)
+                tasks: useTaskStatusesByDay({ year, month, day: i, tasks, filterBy: category ? { key: 'categoryId', value: category } : null, period: 'date' })
             };
             days.push(day);
         };
@@ -31,23 +32,32 @@ export default function Calendar({ year, month, activeDate, activeCategory, task
 
     const days = getCalendarDays({ month, tasks, category: (activeCategory == 0) ? null : activeCategory });
 
+    function isActiveDay(i) {
+        return activeDate == i + 1;
+    };
+
     return (
         <section>
             <div className="container">
-                <div className='calendar-month-dropdown'>
-                    <button className='calendar-month-button' onClick={(e) => openModal(e)}>{monthsNames[month]}</button>
-                    {!modalIsClosed && <ModalCalendarDropdown monthsNames={monthsNames} month={month} onMonthClick={onMonthClick} callback={() => setmodalIsClosed(true)} />}
+                <div className="card">
+                    <div className='calendar-month-dropdown'>
+                        <button className='btn btn--transparent' onClick={(e) => openModal(e)}>
+                            <span>{monthsNames[month]}</span>
+                            <i className="fa-solid fa-caret-down dropdownIcon"></i>
+                        </button>
+                        {!modalIsClosed && <ModalCalendarDropdown monthsNames={monthsNames} month={month} onMonthClick={onMonthClick} callback={() => setmodalIsClosed(true)} />}
+                    </div>
+                    <Scrollable className='calendar-days-container'>
+                        {days.length ? days.map((day, i) =>
+                            <CalendarDay
+                                day={day}
+                                onDayClick={onDayClick}
+                                isActive={isActiveDay(i)}
+                                key={day.id}
+                            />
+                        ) : null}
+                    </Scrollable>
                 </div>
-                <ul className='calendar-days-list'>
-                    {days.length ? days.map((day, i) =>
-                        <CalendarDay
-                            day={day}
-                            onDayClick={onDayClick}
-                            activeDate={activeDate}
-                            key={day.id}
-                        />
-                    ) : null}
-                </ul>
             </div>
         </section>
     )
@@ -64,7 +74,7 @@ class CalendarDropdown extends Component {
 
     render() {
         return (
-            <ul className='calendar-month-dropdown-menu'>
+            <ul className='dropdownList'>
                 {this.props.monthsNames.map((name, i) =>
                     <CalendarDropdownMonth name={name} key={name} month={this.props.month} onMonthClick={this.props.onMonthClick} i={i} />
                 )
@@ -86,7 +96,7 @@ class CalendarDropdownMonth extends Component {
     render() {
         return (
             <li
-                className={'calendar-month-dropdown-menu-month' + (this.props.i == this.props.month ? ' active' : '')}
+                className={'dropdownList-item' + (this.props.i == this.props.month ? ' active' : '')}
                 onClick={() => this.props.onMonthClick(this.props.i)}
             >
                 {this.props.name}
@@ -101,14 +111,11 @@ const ModalCalendarDropdown = withModal(CalendarDropdown);
 
 class CalendarDay extends Component {
 
-    isActiveDay(activeDate) {
-        return activeDate == this.props.day.number ? ' active' : '';
-    }
-
     shouldComponentUpdate(nextProps) {
-        if ((this.isActiveDay(this.props.activeDate) == this.isActiveDay(nextProps.activeDate)) &&
+        if (((this.props.isActive) == nextProps.isActive) &&
             (this.props.month == nextProps.month) &&
-            (this.props.day.tasks == nextProps.day.tasks)) {
+            (this.props.day.tasks == nextProps.day.tasks) &&
+            (this.props.pointerEvents == nextProps.pointerEvents)) {
             return false;
         };
         return true;
@@ -116,15 +123,19 @@ class CalendarDay extends Component {
 
     render() {
         return (
-            <li className={'calendar-day' + this.isActiveDay(this.props.activeDate)} onClick={() => this.props.onDayClick(this.props.day.number)}>
+            <li
+                className={'calendar-day bordered scrollable-item' + (this.props.isActive ? ' active' : '')}
+                onClick={() => this.props.onDayClick(this.props.day.number)}
+                style={{ pointerEvents: `${this.props.pointerEvents}` }}
+            >
                 <span className='calendar-dayName'>{this.props.day.name}</span>
                 <span className='calendar-dayNumber'>{this.props.day.number}</span>
                 {
                     this.props.day.tasks ?
-                        <div className='calendar-dayTasks'>
+                        <div className='tasksList'>
                             {Object.keys(this.props.day.tasks).map((key) =>
                             (
-                                <span key={key + this.props.day.id + ''} className={'calendar-day-tasks ' + key}>{this.props.day.tasks[key]}</span>
+                                <span key={key + this.props.day.id + ''} className={'tasksNumber ' + `${key}TasksNumber`}>{this.props.day.tasks[key]}</span>
                             )
                             )}
                         </div>

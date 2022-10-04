@@ -1,6 +1,7 @@
 'use strict';
 import React, { Component, Fragment } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
+import Toggle from './routes/components/toggle';
 
 
 export default class Layer extends Component {
@@ -13,11 +14,17 @@ export default class Layer extends Component {
         return (
             <Fragment>
                 <header>
-                    <div className="container">
-                        <ul>
-                            <NavLink to='/' end>My todos</NavLink>
-                            <NavLink to='/stat' end>My stat</NavLink>
-                        </ul>
+                    <div className="container header-content">
+                        <nav className='header-nav'>
+                            <Link to='/'>
+                                <img src="../img/logo.png" alt="Логотип" className='logo link--woUnderline'/>
+                            </Link>
+                            <div className="header-nav-pages">
+                                <NavLink to='/tasks' end className='link'><i className="fa-regular fa-square-check header-nav-pages-icon"></i><span>Задачи</span></NavLink>
+                                <NavLink to='/stat' end className='link'><i className="fa-solid fa-chart-simple header-nav-pages-icon"></i> <span>Статистика</span></NavLink>
+                            </div>
+                        </nav>
+                        <Toggle />
                     </div>
                 </header>
                 <main>

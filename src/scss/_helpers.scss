@@ -1,0 +1,74 @@
+@use 'variables' as *;
+
+@mixin setTabletStyles {
+    @media (max-width: $tablet) {
+        @content;
+    }
+}
+
+@mixin setMobileStyles {
+    @media (max-width: $mobile) {
+        @content;
+    }
+}
+
+@mixin setDeskStyles {
+    @media (min-width: #{$tablet+1}) {
+        @content;
+    }
+}
+
+@mixin setDeskStylesXL {
+    @media (min-width: $desk) {
+        @content;
+    }
+}
+
+%hover--color {
+    &:hover {
+        background-color: $accent-hover !important;
+        border-color: transparent;
+    }
+}
+
+%hover--opacity {
+    &:hover {
+        opacity: .6 !important;
+    }
+}
+
+
+
+@include setDeskStyles {
+    :root {
+        --horizontalPadding: 80px;
+    }
+}
+
+@include setDeskStylesXL {
+    :root {
+        --horizontalPadding: calc((100vw - #{$contentWidth__Desk}) / 2);
+    }
+}
+
+@include setTabletStyles {
+    :root {
+        --horizontalPadding: 80px;
+    }
+}
+
+@include setMobileStyles {
+    :root {
+        --horizontalPadding: 30px;
+    }
+}
+
+.container {
+    padding: 0 var(--horizontalPadding);
+
+    @include setDeskStylesXL {
+        padding: 0;
+        width: $contentWidth__Desk;
+        margin-left: calc((100vw - #{$contentWidth__Desk}) / 2);
+    }
+}

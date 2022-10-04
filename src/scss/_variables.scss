@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
+
+//breakpoints
+$mobile: 630px;
+$tablet: 768px;
+$desk: 1200px;
+$contentWidth__Desk: 1110px;
+
+//colors
+$accent: #29A19C;
+$accent-hover: transparentize($color: $accent, $amount: 0.5);
+$remove: #F05454;
+
+:root[data-theme="light"] {
+    --background-color: #FAFAFA;
+    --card-color: #FFFFFF;
+    --text-color: #282846;
+    --border-color: rgba(40, 40, 70, 0.1);
+    --border-color-hover: rgba(40, 40, 70, 0.5);
+}
+
+:root[data-theme="dark"] {
+    --background-color: #222831;
+    --card-color: #2C3440;
+    --text-color: #F9F9F9;
+    --border-color: rgba(249, 249, 249, 0.2);
+    --border-color-hover: rgba(249, 249, 249, 0.5);
+}
+
+//font
+$font: 'Nunito', sans-serif;
+$fz-h1: 24px;
+$fz-h2: 18px;
+$fz-h3: 16px;
+$fz-text: 14px;
