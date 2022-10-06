@@ -28,9 +28,11 @@ export default function withModal(Element) {
         render() {
             const { callback, ...passThroughProps } = this.props;
             return (
-                <div className='popup'>
-                    <i className="fa-solid fa-xmark closeIcon"></i>
-                    <Element {...passThroughProps} />
+                <div className='layer'>
+                    <div className='popup'>
+                        <i className="fa-solid fa-xmark closeIcon"></i>
+                        <Element {...passThroughProps} />
+                    </div>
                 </div>
             )
         }

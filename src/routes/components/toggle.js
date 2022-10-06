@@ -1,6 +1,7 @@
 'use strict';
 import React from 'react';
 import { themes, getTheme } from '../../themes';
+import { editTheme } from './API';
 
 
 export const Toggle = () => {
@@ -12,7 +13,7 @@ export const Toggle = () => {
 
     React.useEffect(() => {
         document.documentElement.dataset.theme = theme;
-        localStorage.setItem('theme', theme)
+        editTheme({ value: theme });
     }, [theme])
 
 

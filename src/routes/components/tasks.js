@@ -106,7 +106,7 @@ export default class Tasks extends Component {
                                     Все время
                                 </button>
                             </div>
-                            <Form action='task'><button type="submit" className='addBtn btn btn--colored btn--add'>Добавить задачу</button></Form>
+                            <Form action='/task'><button type="submit" className='addBtn btn btn--colored btn--add'>Добавить задачу</button></Form>
                         </div>
                         {
                             [activeTasks, doneTasks].map((el) =>

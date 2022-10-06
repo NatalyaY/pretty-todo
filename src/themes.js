@@ -1,4 +1,5 @@
 'use strict';
+import { getTheme as APIgetTheme, editTheme } from './routes/components/API';
 
 export const themes = {
     light: 'light',
@@ -6,8 +7,8 @@ export const themes = {
 }
 
 export const getTheme = () => {
-    const theme = `${window?.localStorage?.getItem('theme')}`;
-    if (Object.values(themes).includes(theme)) return theme;
+    let theme = APIgetTheme();
+    if (Object.values(themes).includes(theme.value)) return theme.value;
 
     const userMedia = window.matchMedia('(prefers-color-scheme: light)');
     if (userMedia.matches) return themes.light;

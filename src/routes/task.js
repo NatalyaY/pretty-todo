@@ -32,12 +32,11 @@ export default function Task() {
         <article>
             <div className="container">
                 <div className="card editForm">
-                    <header className='editForm-contentGroup editForm-contentGroup--row'>
+                    <header className='editForm-contentGroup editForm-contentGroup--row justify-sb'>
                         <h1>{data.heading}</h1>
                         <div className="editForm-contentGroup">
-                            <label className='editForm-contentGroup'>
+                            <label className='editForm-contentGroup' onClick={() => data.state.status.setVal(!data.state.status.val)}>
                                 <div
-                                    onChange={() => data.state.status.setVal(!data.state.status.val)}
                                     className={'customCheckbox' + (data.state.status.val ? ' checked' : '')}
                                 >
                                     <i className="fa-solid fa-check checkbox-mark"></i>
@@ -109,7 +108,7 @@ export default function Task() {
                             </div>
                         </div>
                     </div>
-                    <footer className='editForm-contentGroup editForm-contentGroup--row editForm-btns'>
+                    <footer className='editForm-contentGroup editForm-contentGroup--row editForm-btns justify-sb'>
                         <button type="button"
                             onClick={() => {
                                 navigate(-1);

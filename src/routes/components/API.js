@@ -3,8 +3,17 @@ import React, { Component } from 'react';
 import { redirect } from 'react-router-dom';
 const event = new Event("change localstorage");
 
+function getItems(name) {
+    return JSON.parse(window.localStorage.getItem(name));
+}
+
+function setItems(name, items) {
+    window.localStorage.setItem(name, JSON.stringify(items));
+    window.dispatchEvent(event);
+}
+
 export function getCategories() {
-    if (!JSON.parse(window.localStorage.getItem('categories'))) {
+    if (!getItems('categories')) {
         const categories = [
             {
                 id: 0, name: 'Все', color: 'gray', textColor: '#FAFAFA'
@@ -25,96 +34,113 @@ export function getCategories() {
                 id: 5, name: 'Здоровье', color: 'violet', textColor: '#FAFAFA'
             },
         ];
-        window.localStorage.setItem('categories', JSON.stringify(categories));
+        setItems('categories', categories);
     };
-    return JSON.parse(window.localStorage.getItem('categories')) || [];
+    return getItems('categories') || [];
 }
 
 export function getTasks() {
-    return JSON.parse(window.localStorage.getItem('tasks')) || [];
+    return getItems('tasks') || [];
+}
+
+export function getUser() {
+    return getItems('user') || {};
+}
+
+export function getTheme() {
+    return getItems('theme') || {};
 }
 
 
 export function addCategory(category) {
-    const userCategories = JSON.parse(window.localStorage.getItem('categories')) || [];
+    const userCategories = getCategories();
     category.id = parseInt(Math.random() * 1000000);
-    window.localStorage.setItem('categories', JSON.stringify(userCategories.concat([category])));
-    window.dispatchEvent(event);
+    setItems('categories', userCategories.concat([category]));
 }
 
 export function addTask(task) {
-    const tasks = JSON.parse(window.localStorage.getItem('tasks')) || [];
+    const tasks = getTasks();
     task.creationDate = new Date().getTime();
     task.id = parseInt(Math.random() * 1000000);
-    window.localStorage.setItem('tasks', JSON.stringify(tasks.concat([task])));
-    window.dispatchEvent(event);
+    setItems('tasks', tasks.concat([task]));
 }
 
 
 export function removeCategory(categoryId) {
-    const userCategories = JSON.parse(window.localStorage.getItem('categories')) || [];
+    const userCategories = getCategories();
     const index = userCategories.findIndex(category => category.id === categoryId);
     if (index !== -1) {
         userCategories.splice(index, 1);
-        window.localStorage.setItem('categories', JSON.stringify(userCategories));
-        window.dispatchEvent(event);
+        setItems('categories', userCategories);
     };
 }
 
 export function removeTask(taskId) {
-    const tasks = JSON.parse(window.localStorage.getItem('tasks')) || [];
+    const tasks = getTasks();
     const index = tasks.findIndex(task => task.id === taskId);
     if (index !== -1) {
         tasks.splice(index, 1);
-        window.localStorage.setItem('tasks', JSON.stringify(tasks));
-        window.dispatchEvent(event);
+        setItems('tasks', tasks);
     };
 }
 
 
 export function editTask(updates) {
-    const tasks = JSON.parse(window.localStorage.getItem('tasks')) || [];
+    const tasks = getTasks();
     const index = tasks.findIndex(task => task.id === updates.id);
     if (index !== -1) {
         Object.keys(updates).forEach((key) => {
             tasks[index][key] = updates[key];
         });
-        window.localStorage.setItem('tasks', JSON.stringify(tasks));
-        window.dispatchEvent(event);
+        setItems('tasks', tasks);
     };
 }
 
 export function editCategory(updates) {
-    const userCategories = JSON.parse(window.localStorage.getItem('categories')) || [];
+    const userCategories = getCategories();
     const index = userCategories.findIndex(category => category.id === updates.id);
     if (index !== -1) {
         Object.keys(updates).forEach((key) => {
             userCategories[index][key] = updates[key];
         });
-        window.localStorage.setItem('categories', JSON.stringify(userCategories));
-        window.dispatchEvent(event);
+        setItems('categories', userCategories);
     };
+}
+
+export function editUser(updates) {
+    const user = getUser();
+    Object.keys(updates).forEach((key) => {
+        user[key] = updates[key];
+    });
+    setItems('user', user);
+}
+
+export function editTheme(updates) {
+    const theme = getTheme();
+    Object.keys(updates).forEach((key) => {
+        theme[key] = updates[key];
+    });
+    setItems('theme', theme);
 }
 
 
 export function getTask(taskId) {
-    const tasks = JSON.parse(window.localStorage.getItem('tasks')) || [];
+    const tasks = getTasks();
     return tasks.find(task => task.id === taskId) || null;
 }
 
 export function getCategory(categoryId) {
-    const categories = JSON.parse(window.localStorage.getItem('categories')) || [];
-    return categories.find(category => category.id === categoryId) || null;
+    const userCategories = getCategories();
+    return userCategories.find(category => category.id === categoryId) || null;
 }
 
 
 export function changeTaskStatus(taskId) {
-    const tasks = JSON.parse(window.localStorage.getItem('tasks')) || [];
+    const tasks = getTasks();
     const index = tasks.findIndex(task => task.id === taskId);
     if (index !== -1) {
         tasks[index].status = tasks[index].status == 'active' ? 'done' : 'active';
-        window.localStorage.setItem('tasks', JSON.stringify(tasks));
-        window.dispatchEvent(event);
+        setItems('tasks', tasks);
     };
 }
 
@@ -166,7 +192,7 @@ export function removeAction({ params, request }) {
             removeTask(id);
         };
     };
-    return redirect('/');
+    return redirect('/tasks');
 }
 
 export async function editAction({ params, request }) {
@@ -195,5 +221,5 @@ export async function editAction({ params, request }) {
             addTask(updates);
         };
     };
-    return redirect('/');
+    return redirect('/tasks');
 }

@@ -21,6 +21,10 @@ a {
     color: inherit;
 }
 
+button[disabled] {
+    opacity: 0.5;
+}
+
 h1,
 h2,
 h3,
@@ -51,14 +55,19 @@ form {
     width: 100%;
 }
 
+label {
+    cursor: pointer;
+}
+
 
 //commons
 
 .link {
-    @extend %hover--color;
-    text-decoration: none;
+    @extend %hover--opacity;
     position: relative;
+    text-decoration: none;
     border: 5px solid transparent;
+    cursor: pointer;
     transition: .2s;
 
     &:not(.active) {
@@ -68,13 +77,13 @@ form {
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 1px;
-            background: var(--text-color);
+            border-bottom: 1px solid;
         }
     }
 
     &--woUnderline {
         @extend %hover--opacity;
+        text-decoration: none;
         transition: .2s;
         cursor: pointer;
     }
@@ -92,9 +101,10 @@ form {
     border: 1px solid var(--border-color);
 }
 
-.active {
+.active:not(.input) {
     background-color: $accent  !important;
     color: #F9F9F9 !important;
+    align-self: stretch;
     transition: .2s;
 }
 
@@ -163,11 +173,29 @@ form {
     white-space: nowrap;
 }
 
+.layer {
+    position: absolute;
+    width: 100%;
+    z-index: 9;
+    right: 0;
+    top: 100%;
+
+    @include setTabletStyles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: unset;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(29, 52, 54, 0.7);
+    }
+}
+
 .popup {
     width: 100%;
     position: absolute;
     right: 0;
-    top: 100%;
+    top: 0;
     box-shadow: 0px 10px 25px rgba(29, 52, 54, 0.08);
     z-index: 10;
     display: flex;
@@ -184,8 +212,6 @@ form {
         top: 50%;
         right: unset;
         transform: translate(-50%, -50%);
-        box-shadow: 0px 0px 25px 2000px rgba(29, 52, 54, 0.7);
-        background-color: rgba(29, 52, 54, 0.7);
         width: 90%;
 
         .closeIcon {
@@ -219,6 +245,43 @@ form {
     }
 }
 
+.error {
+    color: $remove;
+    @extend .dropdownList;
+}
+
+.disabled {
+    opacity: 0.5;
+}
+
+.flex1 {
+    flex: 1 1 100%;
+}
+
+.align-start {
+    align-items: start;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.justify-sb {
+    justify-content: space-between;
+}
+
+.align-s-stretch {
+    align-self: stretch;
+}
+
+.mt10 {
+    margin-top: 10px;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
 
 //icons
 
@@ -236,8 +299,7 @@ form {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #282846;
-    opacity: .3;
+    color: var(--border-color);
 }
 
 .dropdownIcon {
@@ -393,40 +455,159 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     margin-top: 30px;
 }
 
 .header-nav {
+    flex: 1;
     display: flex;
     align-items: center;
-    flex: 1;
+    position: relative;
 
     &-pages {
+        order: 3;
         display: flex;
-        gap: 50px;
+        gap: 20px;
         flex: 1;
         align-items: center;
         justify-content: center;
 
         @include setMobileStyles {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            left: 0;
+            bottom: 10px;
+            flex-direction: column;
+            align-items: flex-start;
+            transform: translateY(100%);
             gap: 10px;
+            background-color: var(--card-color);
+            z-index: 10;
+            padding: 10px;
+            transition: .2s;
         }
 
         &-icon {
             margin-right: 5px;
         }
     }
-}
 
-.logo {
     @include setMobileStyles {
-        width: 30px;
-        aspect-ratio: 1;
-        object-fit: cover;
-        object-position: left;
+        gap: 20px;
     }
 }
 
+.logoLink {
+    order: 2;
+
+    .logo {
+        @include setMobileStyles {
+            width: 44px;
+            aspect-ratio: 1;
+            object-fit: cover;
+            object-position: left;
+        }
+    }
+}
+
+.nav-burger {
+    height: 24px;
+    aspect-ratio: 1;
+    border-top: 2px solid;
+    border-bottom: 2px solid;
+    position: relative;
+    display: none;
+
+    &::after,
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+        height: 2px;
+        background-color: var(--text-color);
+        transition: .2s;
+    }
+
+    &::before {
+        opacity: 0;
+    }
+
+    @include setMobileStyles {
+        display: block;
+    }
+}
+
+#menuMobile {
+
+    @include setMobileStyles {
+        &:checked {
+            &~.header-nav-pages {
+                visibility: visible;
+                opacity: 1;
+                bottom: -10px;
+                box-shadow: 0px 10px 25px rgba(29, 52, 54, 0.08) !important;
+            }
+
+            &~label .nav-burger {
+                border-color: transparent;
+
+                &:before {
+                    opacity: 1;
+                }
+
+                &:before {
+                    transform: rotate(45deg);
+                }
+
+                &:after {
+                    transform: rotate(-45deg);
+                }
+            }
+        }
+    }
+
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.userImgWrap {
+    @extend .bordered;
+    border: 1px solid #F0F0F0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background-color: var(--card-color);
+
+    &--header {
+        width: 44px;
+        height: 44px;
+    }
+
+    &--main {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+
+}
+
+.userImg {
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
 
 //scrollable
 
@@ -636,8 +817,6 @@ textarea {
 
     &-contentGroup {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
         gap: 10px;
 
         &--col {
@@ -660,6 +839,18 @@ textarea {
     &-btns {
         margin-top: 30px;
     }
+}
+
+
+// main
+
+.userAddImgLink {
+    color: $accent;
+    margin: 0 auto;
+}
+
+.userDataBtn {
+    margin-top: 20px;
 }
 
 
@@ -696,6 +887,10 @@ textarea {
     background: #29A19C !important;
     color: #FAFAFA !important;
     border-color: #29A19C !important;
+}
+
+.themeShedule input.flatpickr-input.flatpickr-mobile {
+    padding: 5px;
 }
 
 

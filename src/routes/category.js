@@ -18,7 +18,7 @@ export default function Category() {
         <article>
             <div className="container">
                 <div className="card editForm">
-                    <header className='editForm-contentGroup'>
+                    <header className='editForm-contentGroup justify-sb'>
                         <h1>{data.heading}</h1>
                         {data.item &&
                             <Form action='remove' method='POST'>
@@ -50,7 +50,7 @@ export default function Category() {
                             <input type="color" value={data.state.color.val} onChange={(e) => data.state.color.setVal(e.target.value)} />
                         </label>
                     </div>
-                    <footer className='editForm-contentGroup editForm-contentGroup--row editForm-btns'>
+                    <footer className='editForm-contentGroup editForm-contentGroup--row editForm-btns justify-sb'>
                         <button type="button"
                             onClick={() => {
                                 navigate(-1);

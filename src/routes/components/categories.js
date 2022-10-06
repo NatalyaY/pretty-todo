@@ -29,7 +29,7 @@ export default function Categories({ year, categories, tasks, month, activeDate,
                             />
                         )
                         }
-                        <Form action='category'><button type="submit" className='categories-addBtn btn btn--transparent btn--add'>Добавить категорию</button></Form>
+                        <Form action='/category'><button type="submit" className='categories-addBtn btn btn--transparent btn--add'>Добавить категорию</button></Form>
                     </Scrollable>
                 </div>
             </div>

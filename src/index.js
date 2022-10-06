@@ -8,6 +8,7 @@ import {
 import './scss/index.scss';
 import Error from './error';
 import Layer from './layer';
+import Main from './routes/mainPage';
 import Stat from './routes/stat';
 import Todos from './routes/todos';
 import Task from './routes/task';
@@ -31,7 +32,7 @@ const router = createBrowserRouter([
                     },
                     {
                         index: true,
-                        element: <Todos />,
+                        element: <Main />,
                     },
                     {
                         path: 'tasks',
