@@ -237,6 +237,7 @@ const common = (options) => {
                     { from: "src/img", to: "img" },
                     { from: "src/browserconfig.xml", to: "browserconfig.xml" },
                     { from: "src/manifest.json", to: "manifest.json" },
+                    { from: "src/server.js", to: "server.js" },
                 ]
             }),
         ],
