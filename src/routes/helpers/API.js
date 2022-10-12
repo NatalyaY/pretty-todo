@@ -1,42 +1,61 @@
 'use strict';
-import React, { Component } from 'react';
 import { redirect } from 'react-router-dom';
 const event = new Event("change localstorage");
 
 function getItems(name) {
-    return JSON.parse(window.localStorage.getItem(name));
+    const user = JSON.parse(window.localStorage.getItem('user')) || setDefaultUser();
+    if (!user) {
+        return null;
+    };
+    return name ? user[name] : user;
+}
+
+function setDefaultUser() {
+    const user = {
+        categories: setDefaultCategories(),
+        tasks: [],
+        theme: {},
+        data: {},
+        creationDate: Date.now(),
+    };
+    window.localStorage.setItem('user', JSON.stringify(user));
+    return user;
+}
+
+function setDefaultCategories() {
+    const categories = [
+        {
+            id: 0, name: 'Все', color: 'gray', textColor: '#FAFAFA'
+        },
+        {
+            id: 1, name: 'Дом', color: 'blue', textColor: '#FAFAFA'
+        },
+        {
+            id: 2, name: 'Семья', color: 'red', textColor: '#FAFAFA'
+        },
+        {
+            id: 3, name: 'Работа', color: 'orange', textColor: '#FAFAFA'
+        },
+        {
+            id: 4, name: 'Спорт', color: 'green', textColor: '#FAFAFA'
+        },
+        {
+            id: 5, name: 'Здоровье', color: 'violet', textColor: '#FAFAFA'
+        },
+    ];
+    window.localStorage.setItem('defaultCategories', JSON.stringify(categories));
+    return categories;
 }
 
 function setItems(name, items) {
-    window.localStorage.setItem(name, JSON.stringify(items));
+    const newUser = getUser();
+    newUser[name] = items;
+    window.localStorage.setItem('user', JSON.stringify(newUser));
     window.dispatchEvent(event);
 }
 
 export function getCategories() {
-    if (!getItems('categories')) {
-        const categories = [
-            {
-                id: 0, name: 'Все', color: 'gray', textColor: '#FAFAFA'
-            },
-            {
-                id: 1, name: 'Дом', color: 'blue', textColor: '#FAFAFA'
-            },
-            {
-                id: 2, name: 'Семья', color: 'red', textColor: '#FAFAFA'
-            },
-            {
-                id: 3, name: 'Работа', color: 'orange', textColor: '#FAFAFA'
-            },
-            {
-                id: 4, name: 'Спорт', color: 'green', textColor: '#FAFAFA'
-            },
-            {
-                id: 5, name: 'Здоровье', color: 'violet', textColor: '#FAFAFA'
-            },
-        ];
-        setItems('categories', categories);
-    };
-    return getItems('categories') || [];
+    return getItems('categories');
 }
 
 export function getTasks() {
@@ -44,7 +63,11 @@ export function getTasks() {
 }
 
 export function getUser() {
-    return getItems('user') || {};
+    return getItems();
+}
+
+export function getUserData() {
+    return getItems('data');
 }
 
 export function getTheme() {
@@ -60,7 +83,7 @@ export function addCategory(category) {
 
 export function addTask(task) {
     const tasks = getTasks();
-    task.creationDate = new Date().getTime();
+    task.creationDate = Date.now();
     task.id = parseInt(Math.random() * 1000000);
     setItems('tasks', tasks.concat([task]));
 }
@@ -107,12 +130,12 @@ export function editCategory(updates) {
     };
 }
 
-export function editUser(updates) {
-    const user = getUser();
+export function editUserData(updates) {
+    const user = getUserData();
     Object.keys(updates).forEach((key) => {
         user[key] = updates[key];
     });
-    setItems('user', user);
+    setItems('data', user);
 }
 
 export function editTheme(updates) {
@@ -134,51 +157,26 @@ export function getCategory(categoryId) {
     return userCategories.find(category => category.id === categoryId) || null;
 }
 
-
 export function changeTaskStatus(taskId) {
     const tasks = getTasks();
     const index = tasks.findIndex(task => task.id === taskId);
     if (index !== -1) {
         tasks[index].status = tasks[index].status == 'active' ? 'done' : 'active';
+        tasks[index].finishedDate = tasks[index].status == 'done' ? Date.now() : null;
+        tasks[index].doneInTime = tasks[index].status == 'done' ? (tasks[index].finishedDate > tasks[index].targetDate) ? false : true : null;
         setItems('tasks', tasks);
     };
 }
 
 
-export function withSubscription(Element) {
+export function subscribe(callback) {
+    window.addEventListener('change localstorage', callback);
+    window.addEventListener('storage', callback);
+}
 
-    return class extends Component {
-
-        constructor(props) {
-            super(props);
-            this.state = {
-                categories: getCategories(),
-                tasks: getTasks(),
-            };
-            this.updateState = this.updateState.bind(this);
-        }
-
-        updateState() {
-            this.setState({
-                categories: getCategories(),
-                tasks: getTasks(),
-            });
-        };
-
-        componentDidMount() {
-            window.addEventListener('change localstorage', this.updateState);
-            window.addEventListener('storage', this.updateState);
-        }
-
-        componentWillUnmount() {
-            window.removeEventListener('change localstorage', this.updateState);
-            window.removeEventListener('storage', this.updateState);
-        }
-
-        render() {
-            return <Element categories={this.state.categories} tasks={this.state.tasks} />
-        }
-    }
+export function unSubscribe(callback) {
+    window.removeEventListener('change localstorage', callback);
+    window.removeEventListener('storage', callback);
 }
 
 
@@ -221,5 +219,6 @@ export async function editAction({ params, request }) {
             addTask(updates);
         };
     };
+
     return redirect('/tasks');
 }

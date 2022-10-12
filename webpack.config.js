@@ -43,11 +43,40 @@ const prod = {
         rules: [
             {
                 test: /\.s[ac]ss$/i,
+                exclude: /_variables.scss/i,
                 use: [{ loader: MiniCssExtractPlugin.loader },
                 {
                     loader: "css-loader",
                     options: {
                         importLoaders: 1,
+                        sourceMap: true,
+                        url: true
+                    }
+                },
+                {
+                    loader: 'postcss-loader',
+                    options: {
+                        postcssOptions: {
+                            plugins: [postcssPresetEnv({ browsers: '>= 0.5%, last 6 versions, Firefox ESR, not dead' })],
+                        },
+                    },
+                },
+                {
+                    loader: "sass-loader",
+                    options: {
+                        sourceMap: true,
+                    },
+                },
+                ],
+            },
+            {
+                test: /_variables.scss/i,
+                use: [{ loader: MiniCssExtractPlugin.loader },
+                {
+                    loader: "css-loader",
+                    options: {
+                        importLoaders: 1,
+                        modules: true,
                         sourceMap: true,
                         url: true
                     }
@@ -106,11 +135,31 @@ const dev = {
         rules: [
             {
                 test: /\.s[ac]ss$/i,
+                exclude: /_variables.scss/i,
                 use: [
                     "style-loader",
                     {
                         loader: "css-loader",
                         options: {
+                            sourceMap: true,
+                        },
+                    },
+                    {
+                        loader: "sass-loader",
+                        options: {
+                            sourceMap: true,
+                        },
+                    },
+                ],
+            },
+            {
+                test: /_variables.scss/i,
+                use: [
+                    "style-loader",
+                    {
+                        loader: "css-loader",
+                        options: {
+                            modules: true,
                             sourceMap: true,
                         },
                     },
@@ -186,6 +235,8 @@ const common = (options) => {
             new CopyPlugin({
                 patterns: [
                     { from: "src/img", to: "img" },
+                    { from: "src/browserconfig.xml", to: "browserconfig.xml" },
+                    { from: "src/manifest.json", to: "manifest.json" },
                 ]
             }),
         ],

@@ -13,7 +13,7 @@ import Stat from './routes/stat';
 import Todos from './routes/todos';
 import Task from './routes/task';
 import Category from './routes/category';
-import { removeAction, editAction } from './routes/components/API';
+import { removeAction, editAction } from './routes/helpers/API';
 
 
 

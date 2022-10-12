@@ -16,6 +16,7 @@ $remove: #F05454;
     --card-color: #FFFFFF;
     --text-color: #282846;
     --border-color: rgba(40, 40, 70, 0.1);
+    --neutral-color: rgba(40, 40, 70, 0.3);
     --border-color-hover: rgba(40, 40, 70, 0.5);
 }
 
@@ -24,6 +25,7 @@ $remove: #F05454;
     --card-color: #2C3440;
     --text-color: #F9F9F9;
     --border-color: rgba(249, 249, 249, 0.2);
+    --neutral-color: rgba(249, 249, 249, 0.4);
     --border-color-hover: rgba(249, 249, 249, 0.5);
 }
 
@@ -33,3 +35,13 @@ $fz-h1: 24px;
 $fz-h2: 18px;
 $fz-h3: 16px;
 $fz-text: 14px;
+
+:export {
+    font: $font;
+    fzh2: $fz-h2;
+    accent: $accent;
+    accentTransparent: $accent-hover;
+    accentClicked: transparentize($accent, .7);
+    accentTransparentClicked: transparentize($accent, .9);
+    textColor: var(--text-color);
+}

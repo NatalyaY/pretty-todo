@@ -5,16 +5,17 @@ import {
     useNavigate,
     Form,
 } from 'react-router-dom';
-import * as API from './components/API';
-import withModal from './components/modal';
-import useEditData from './components/edit';
+import * as API from './helpers/API';
+import useModal from './helpers/useModal';
+import useEditForm from './helpers/useEditForm';
 import Flatpickr from "react-flatpickr";
 import { Russian } from "flatpickr/dist/l10n/ru.js";
 import "flatpickr/dist/flatpickr.min.css";
 
+
 export default function Task() {
 
-    const data = useEditData('task');
+    const data = useEditForm('task');
 
     const categories = API.getCategories().slice(1);
 
@@ -87,6 +88,7 @@ export default function Task() {
                                         "locale": Russian,
                                         defaultHour: 23,
                                         defaultMinute: 59,
+                                        minDate: new Date().setHours(0, 0, 0, 0),
                                     }}
                                     onChange={([date]) => {
                                         data.state.targetDate.setVal(date.getTime());
@@ -139,6 +141,6 @@ class Categories extends Component {
 }
 
 
-const ModalCategories = withModal(Categories);
+const ModalCategories = useModal(Categories);
 
 

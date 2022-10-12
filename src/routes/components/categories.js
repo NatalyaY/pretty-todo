@@ -1,15 +1,15 @@
 'use strict';
-import React, { Fragment } from 'react'
+import React from 'react'
 import { Form } from "react-router-dom";
-import useTaskStatusesByDay from './useTaskStatuses';
-import Scrollable from './scrollable';
+import getTaskStatusesByDay from '../helpers/getTaskStatusesByDay';
+import Scrollable from '../helpers/Scrollable';
 
 
 
 export default function Categories({ year, categories, tasks, month, activeDate, tasksPeriod, removeCategory, changeActiveCategory, activeCategory }) {
 
     categories = categories.map((category) => {
-        category.todayTasks = useTaskStatusesByDay({ year, month, day: activeDate, tasks, filterBy: { key: 'categoryId', value: category.id }, period: tasksPeriod });
+        category.todayTasks = getTaskStatusesByDay({ year, month, day: activeDate, tasks, filterBy: { key: 'categoryId', value: category.id }, period: tasksPeriod });
         return category;
     });
 
@@ -38,8 +38,8 @@ export default function Categories({ year, categories, tasks, month, activeDate,
 }
 
 function Category(props) {
-    let className = 'category scrollable-item';
 
+    let className = 'category scrollable-item';
     if (props.isActive) {
         className += ' activeCategory';
     };

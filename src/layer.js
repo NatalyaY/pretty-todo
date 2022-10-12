@@ -1,5 +1,5 @@
 'use strict';
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import Toggle from './routes/components/toggle';
 import { UserProvider } from './userContext';

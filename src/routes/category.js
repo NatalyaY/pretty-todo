@@ -5,12 +5,12 @@ import {
     useNavigate,
     Form,
 } from 'react-router-dom';
-import useEditData from './components/edit';
+import useEditForm from './helpers/useEditForm';
 
 
 export default function Category() {
 
-    const data = useEditData('category');
+    const data = useEditForm('category');
     const navigate = useNavigate();
 
 

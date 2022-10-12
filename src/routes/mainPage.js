@@ -1,20 +1,23 @@
 'use strict';
-import React, { Fragment } from 'react';
-import {
-    CSSTransition,
-    TransitionGroup,
-} from 'react-transition-group';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { CSSTransition } from 'react-transition-group';
 import Flatpickr from "react-flatpickr";
 import { Russian } from "flatpickr/dist/l10n/ru.js";
 import "flatpickr/dist/flatpickr.min.css";
 import { UserContext } from '../userContext';
-import withModal from './components/modal';
-import { getTheme as APIgetTheme, editTheme } from './components/API';
+
+import useModal from './helpers/useModal';
+import getTaskStatusesByDay from './helpers/getTaskStatusesByDay';
+import getTimeParts from './helpers/getTimeParts';
+import getCorrectTextEndings from './helpers/getCorrectTextEndings';
+
+import * as API from './helpers/API';
 
 
 export default function Main() {
-    const { user, saveUser } = React.useContext(UserContext);
-    const name = (user.name && user.name != ' ') ? user.name : 'Гость';
+    const { user } = React.useContext(UserContext);
+    const name = (user.data.name && user.data.name != ' ') ? user.data.name : 'Гость';
 
     const getGreetingsAndTime = () => {
         const time = new Date().getHours();
@@ -32,7 +35,7 @@ export default function Main() {
             greetingsText = 'Добрый вечер';
             timeWhenChange = new Date().setHours(23, 59, 59, 1000);
         };
-        return {greetingsText, timeWhenChange};
+        return { greetingsText, timeWhenChange };
     };
 
     const changeGreetings = () => {
@@ -55,16 +58,24 @@ export default function Main() {
 
     return (
         <section>
-            <div className="container mainPageContainer">
-                <div className="card">
-                    <h1>{`${greetings}, ${name}!`}</h1>
-                </div>
+            <div className="container">
+                <h1 className='mainPageGreetings'>{`${greetings}, ${name}!`}</h1>
                 <section className='editForm-contentGroup editForm-contentGroup--row align-start'>
                     <div className="card flex1">
-                        <UserData user={user} saveUser={saveUser} />
+                        <UserData user={user} />
                     </div>
-                    <div className="card flex1">
-                    </div>
+                    <section className='df df--col flex1'>
+                        <div className="card">
+                            <TimeAndDate />
+                        </div>
+                        <div className="card">
+                            <TodayTasks tasks={user.tasks} />
+                        </div>
+                        <div className="card">
+                            <UsageDuration userCreationDate={user.creationDate} tasksQty={user.tasks.length} />
+                        </div>
+                    </section>
+
                 </section>
             </div>
         </section>
@@ -74,13 +85,13 @@ export default function Main() {
 
 function UserData(props) {
     const [preview, setPreview] = React.useState(null);
-    const [name, setName] = React.useState(props.user.name || '');
+    const [name, setName] = React.useState(props.user.data.name || '');
     const [filetype, setFileType] = React.useState('');
     const [errmessage, setErrmessage] = React.useState('');
     const [submitDisabled, setSubmitDisabled] = React.useState(true);
 
 
-    const theme = APIgetTheme();
+    const theme = props.user.theme;
     const [autoTheme, setAutoTheme] = React.useState(theme?.autoTheme || {});
 
     const onChangeImg = (e) => {
@@ -133,7 +144,7 @@ function UserData(props) {
         };
 
         if (Object.keys(newUser).length) {
-            props.saveUser(newUser);
+            API.editUserData(newUser);
         };
 
         if (Object.keys(autoTheme).length) {
@@ -141,22 +152,22 @@ function UserData(props) {
                 ...theme,
                 autoTheme,
             };
-            editTheme(theme);
+            API.editTheme(theme);
         };
         setPreview(null);
         setSubmitDisabled(true);
     };
 
     return (
-        <div className='editForm-contentGroup editForm-contentGroup--row align-start'>
-            <label className='editForm-contentGroup editForm-contentGroup--col'>
+        <div className='df df--wrap gap30 align-start'>
+            <label className='df df--col gap10 flex1'>
                 <div className="userImgWrap userImgWrap--main">
                     {
-                        props.user.avatar || preview ? <img className="userImg" src={preview || props.user.avatar} alt="" /> :
+                        props.user.data.avatar || preview ? <img className="userImg" src={preview || props.user.data.avatar} alt="" /> :
                             <svg className="userImg"><use href="../img/user.svg#avatarDefault" /></svg>
                     }
                 </div>
-                <span className='userAddImgLink link'>{props.user.img ? 'изменить фото' : 'добавить фото'}</span>
+                <span className='userAddImgLink link bold'>{props.user.data.avatar ? 'изменить фото' : 'добавить фото'}</span>
                 <input
                     type="file"
                     onChange={onChangeImg}
@@ -164,9 +175,9 @@ function UserData(props) {
                     hidden
                 />
             </label>
-            <div className="editForm-contentGroup editForm-contentGroup--col">
-                <label className='editForm-contentGroup editForm-contentGroup--col align-s-stretch'>
-                    <span>Ваш никнейм:</span>
+            <div className="df df--col gap10 flex1">
+                <label className='df df--col gap10 align-s-stretch'>
+                    <span className='bold'>Ваш никнейм:</span>
                     <input
                         type="text"
                         value={name}
@@ -196,7 +207,6 @@ function UserData(props) {
     )
 }
 
-
 function AutoTheme({ themeFromAPI, autoTheme, setAutoTheme, setSubmitDisabled }) {
 
     const date = new Date();
@@ -221,8 +231,8 @@ function AutoTheme({ themeFromAPI, autoTheme, setAutoTheme, setSubmitDisabled })
             end: `${darkThemeEnd.getHours()}:${darkThemeEnd.getMinutes()}`,
         },
         lightTheme: {
-            start: `${lightThemeStart.getHours()}:${lightThemeStart.getMinutes()}`,
-            end: `${lightThemeEnd.getHours()}:${lightThemeEnd.getMinutes()}`,
+            start: lightThemeStart ? `${lightThemeStart.getHours()}:${lightThemeStart.getMinutes()}` : null,
+            end: lightThemeEnd ? `${lightThemeEnd.getHours()}:${lightThemeEnd.getMinutes()}` : null,
         },
     }
 
@@ -320,7 +330,7 @@ function AutoTheme({ themeFromAPI, autoTheme, setAutoTheme, setSubmitDisabled })
             >
                 <div ref={autoThemeRef} className='editForm-contentGroup editForm-contentGroup--col themeShedule'>
                     <div className={'editForm-contentGroup editForm-contentGroup--col align-s-stretch' + (!darkThemeStart ? ' disabled' : '')}>
-                        <span>Темная тема:</span>
+                        <span className='bold'>Темная тема:</span>
                         <div className='editForm-contentGroup align-s-stretch'>
                             <label className='editForm-contentGroup align-center flex1'>
                                 <span>с:</span>
@@ -363,7 +373,7 @@ function AutoTheme({ themeFromAPI, autoTheme, setAutoTheme, setSubmitDisabled })
                         </div>
                     </div>
                     <div className={'editForm-contentGroup editForm-contentGroup--col align-s-stretch mt10' + (!lightThemeStart ? ' disabled' : '')}>
-                        <span>Светлая тема:</span>
+                        <span className='bold'>Светлая тема:</span>
                         <div className='editForm-contentGroup align-s-stretch'>
                             <label className='editForm-contentGroup align-center flex1'>
                                 <span>с:</span>
@@ -411,10 +421,119 @@ function AutoTheme({ themeFromAPI, autoTheme, setAutoTheme, setSubmitDisabled })
     )
 }
 
+function TimeAndDate() {
+    const [date, setDate] = React.useState(new Date());
+    const monthsNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setDate(new Date())
+        }, 1000);
+        return () => {
+            clearTimeout(timer);
+        }
+    });
+
+    return (
+        <>
+            <h2 className='mb20'>Такс такс такс</h2>
+            <div className='df df--wrap gap10 justify-sb'>
+                <div className='df df--col gap5'>
+                    <span>На часах у нас</span>
+                    <div className='df df--center bold gap10'>
+                        <i className="fa-regular fa-clock fz24"></i>
+                        <span className='fz25 noWrap'>{`${date.toLocaleTimeString()}`}</span>
+                    </div>
+                </div>
+                <div className='df df--col gap5'>
+                    <span>А сегодня у нас</span>
+                    <div className='df df--center bold gap10'>
+                        <i className="fa-regular fa-calendar fz24"></i>
+                        <span className='fz25 noWrap'>{`${date.getDate()} ${monthsNames[date.getMonth()]} ${date.getFullYear()}`}</span>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+function TodayTasks({ tasks }) {
+    const today = new Date();
+    const todayTasks = getTaskStatusesByDay({ year: today.getFullYear(), month: today.getMonth(), day: today.getDate(), tasks, period: 'date' });
+
+    return (
+        <>
+            <h2 className='mb20'>Задачи на сегодня</h2>
+            <div className='df df--wrap gap10 justify-sb'>
+                {
+                    tasks.length &&
+                    (
+                        todayTasks ?
+                            (
+                                Object.keys(todayTasks).map((key) =>
+                                (
+                                    <p key={key + ''} className='df df--center gap10' style={key == 'done' ? { 'order': 1 } : null}>
+                                        <span className={'tasksNumber fz25 ' + `${key}TasksNumber`}>{todayTasks[key]}</span>
+                                        <span className='bold'>{getCorrectTextEndings({ qty: todayTasks[key], type: key })}</span>
+                                    </p>
+                                )
+                                )
+                            )
+                            : <p>На сегодня нет задач</p>
+                    )
+
+                    || <p>Вы еще не создавали задач</p>
+                }
+            </div>
+            <Link to='/tasks' className='btn btn--transparent link--woUnderline mt20' style={{ display: 'block', textAlign: 'center' }}>
+                К задачам
+            </Link>
+        </>
+    )
+}
+
+function UsageDuration({ userCreationDate, tasksQty }) {
+    const [date, setDate] = React.useState(Date.now());
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setDate(new Date());
+        }, 1000);
+        return () => {
+            clearTimeout(timer);
+        };
+    });
+
+    const duration = Math.floor((date - userCreationDate) / 1000);
+    const { months, weeks, days, hours } = getTimeParts(duration);
+    let usageTime;
+    if (months || weeks || days || hours) {
+        usageTime = '' + (months ? `${months} мес. ` : '') + (weeks ? `${weeks} нед. ` : '') + (days ? `${days} д. ` : '') + (hours ? `${hours} ч.` : '')
+    };
+
+    return (
+        <>
+            <h2 className='mb20'>Немного статистики</h2>
+            <div className='df df--wrap gap10 justify-sb'>
+                <div className='df df--col bold gap10'>
+                    <p>Вы используете сервис:</p>
+                    <p className='fz25'>{usageTime || 'меньше часа'}</p>
+                </div>
+                <div className='df df--col bold gap10'>
+                    <p>Всего вы создали:</p>
+                    <p className='fz25'>{tasksQty + getCorrectTextEndings({ qty: tasksQty, textsArr: [" задачу", " задачи", " задач"] })}</p>
+                </div>
+            </div>
+            <Link to='/stat' className='btn btn--transparent link--woUnderline mt20' style={{ display: 'block', textAlign: 'center' }}>
+                К статистике
+            </Link>
+
+        </>
+    )
+}
 
 function Errmessage({ message }) {
     return <span className='error'>{message}</span>
 };
 
-const ModalErrmessage = withModal(Errmessage);
+const ModalErrmessage = useModal(Errmessage);

@@ -1,6 +1,6 @@
 'use strict';
 
-export default function useTaskStatusesByDay({year, month, day, tasks, filterBy = null, period}) {
+export default function getTaskStatusesByDay({year, month, day, tasks, filterBy = null, period}) {
     if (!tasks || !tasks.length) {
         return null;
     };

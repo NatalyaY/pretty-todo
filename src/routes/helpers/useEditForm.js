@@ -8,7 +8,7 @@ import * as API from './API';
 import hexToHsl from 'hex-to-hsl';
 
 
-export default function useEditData(type) {
+export default function useEditForm(type) {
     const id = (type == 'category') ? Number(useParams().categoryId) || null : Number(useParams().taskId) || null;
     const headingText = (type == 'task') ? 'задачу' : 'категорию';
 
@@ -56,8 +56,10 @@ export default function useEditData(type) {
     data.state.validate = { val: validate, setVal: setValidate };
 
     const submit = useSubmit();
+
     data.submitChanges = () => {
         data.state.validate.setVal(true);
+
         if (data.state.name.val == '') {
             data.state.empty.setVal(true);
             return;

@@ -102,14 +102,14 @@ label {
 }
 
 .active:not(.input) {
-    background-color: $accent  !important;
+    background-color: $accent !important;
     color: #F9F9F9 !important;
     align-self: stretch;
     transition: .2s;
 }
 
 .activeCategory {
-    border: 5px solid $accent  !important;
+    border: 5px solid $accent !important;
     transition: .2s;
 }
 
@@ -255,7 +255,7 @@ label {
 }
 
 .flex1 {
-    flex: 1 1 100%;
+    flex: 1 1;
 }
 
 .align-start {
@@ -270,6 +270,10 @@ label {
     justify-content: space-between;
 }
 
+.tac {
+    text-align: center;
+}
+
 .align-s-stretch {
     align-self: stretch;
 }
@@ -278,8 +282,78 @@ label {
     margin-top: 10px;
 }
 
+.mt20 {
+    margin-top: 20px;
+}
+
+.mb20 {
+    margin-bottom: 20px;
+}
+
 .nowrap {
     white-space: nowrap;
+}
+
+.spinner {
+    color: $accent;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+}
+
+.df {
+    display: flex;
+
+    &--col {
+        flex-direction: column;
+    }
+
+    &--center {
+        align-items: center;
+        justify-content: center;
+    }
+
+    &--wrap {
+        flex-wrap: wrap;
+    }
+}
+
+.gap30 {
+    gap: 30px;
+}
+
+.gap10 {
+    gap: 10px;
+}
+
+.gap5 {
+    gap: 5px;
+}
+
+.fz25 {
+    font-size: 25px;
+
+    @include setTabletStyles {
+        font-size: 22px;
+    }
+}
+
+.fz24 {
+    font-size: 24px;
+
+    @include setTabletStyles {
+        font-size: 21px;
+    }
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.accent {
+    color: $accent;
 }
 
 
@@ -659,6 +733,11 @@ textarea {
 .calendar-month-dropdown {
     margin-bottom: 30px;
     position: relative;
+    width: fit-content;
+
+    @include setTabletStyles {
+        width: 100%;
+    }
 }
 
 .calendar-day {
@@ -729,6 +808,8 @@ textarea {
         }
     }
 }
+
+
 
 .tasks-group {
     margin-top: 30px;
@@ -844,6 +925,15 @@ textarea {
 
 // main
 
+.mainPageGreetings {
+    margin-top: 50px;
+
+    @include setTabletStyles {
+        text-align: center;
+        justify-content: center;
+    }
+}
+
 .userAddImgLink {
     color: $accent;
     margin: 0 auto;
@@ -851,6 +941,169 @@ textarea {
 
 .userDataBtn {
     margin-top: 20px;
+}
+
+// stat
+
+$border-width: 10px;
+
+.stat-header {
+    @extend .mainPageGreetings;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.stat-periodBtns {
+    flex-wrap: wrap;
+}
+
+.tasksStat {
+    flex: 1 1;
+    flex-basis: calc(64% - 5px);
+}
+
+.bestDay {
+    flex: 1 1;
+    flex-basis: calc(36% - 5px);
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    justify-content: center;
+    min-width: 250px;
+}
+
+.taskStatsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.taskStatSquare {
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    flex: 0;
+    text-align: center;
+    min-width: 155px;
+    color: var(--text-color);
+
+    &.negative {
+        color: $remove;
+        border-color: $remove;
+    }
+
+    ;
+
+    &.positive {
+        color: $accent;
+        border-color: $accent;
+    }
+
+    ;
+
+    @include setTabletStyles {
+        flex: 1 1;
+        flex-basis: calc(50% - 5px);
+    }
+}
+
+.taskStatHeading {
+    font-size: 18px;
+    color: inherit;
+
+    @include setTabletStyles {
+        font-size: 16px;
+    }
+}
+
+.taskStatCircle {
+    border-radius: 50%;
+    border: $border-width solid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    aspect-ratio: 1;
+    padding: 15px;
+    position: relative;
+    width: 100%;
+    max-width: 200px;
+    border-color: var(--border-color);
+
+    @include setDeskStylesXL {
+        width: 80%;
+    }
+}
+
+.taskStatMainText {
+    font-weight: bold;
+    font-size: 28px;
+    color: inherit;
+
+    &Holder {
+        height: 0;
+        font-weight: bold;
+        font-size: 28px;
+        opacity: 0;
+    }
+}
+
+.taskStatAdditionalText {
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+.border-slice {
+    position: absolute;
+    top: -$border-width;
+    width: calc(50% + $border-width);
+    height: calc(100% + $border-width*2);
+    overflow: hidden;
+
+    .border-fill {
+        width: 200%;
+        height: 100%;
+        border-radius: 50%;
+        position: absolute;
+        top: 0;
+        border: $border-width solid;
+        border-top-color: inherit;
+        border-bottom-color: transparent;
+    }
+
+    &--left {
+        left: (-1 * $border-width);
+
+        & .border-fill {
+            left: 0;
+            border-right-color: inherit;
+            border-left-color: transparent;
+        }
+    }
+
+    &--right {
+        right: (-1 * $border-width);
+
+        & .border-fill {
+            left: -100%;
+            border-left-color: inherit;
+            border-right-color: transparent;
+        }
+    }
+}
+
+.chartContainer {
+    position: relative;
+    min-height: 400px;
+
+    @include setTabletStyles {
+        min-height: unset;
+        height: 300px;
+    }
 }
 
 

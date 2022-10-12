@@ -1,35 +1,32 @@
 'use strict';
-import React, { Component, Fragment } from 'react';
+import React, { Fragment } from 'react';
 import Calendar from './components/calendar';
 import Categories from './components/categories';
 import Tasks from './components/tasks';
-import * as API from './components/API';
+import * as API from './helpers/API';
+import { UserContext } from '../userContext';
 
 
-class Todos extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            activeDate: new Date().getDate(),
-            activeMonth: new Date().getMonth(),
-            activeCategory: 0,
-            tasksPeriod: 'date',
-        };
-        this.year = new Date().getFullYear();
-        this.filteredTasks = [];
+export default function Todos() {
 
-        this.changeActiveDate = this.changeActiveDate.bind(this);
-        this.changeActiveMonth = this.changeActiveMonth.bind(this);
-        this.removeCategory = this.removeCategory.bind(this);
-        this.removeTask = this.removeTask.bind(this);
-        this.changeActiveCategory = this.changeActiveCategory.bind(this);
-        this.changeTasksPeriod = this.changeTasksPeriod.bind(this);
-        this.changeTaskStatus = this.changeTaskStatus.bind(this);
-    }
+    const today = new Date();
+    const yearNow = today.getFullYear();
+    const dateNow = today.getDate();
+    const monthNow = today.getMonth();
+    let filteredTasks = [];
 
-    getFilteredTasks({ query = {}, tasks = this.state.tasks }) {
+    const [activeDate, setActiveDate] = React.useState(dateNow);
+    const [activeMonth, setActiveMonth] = React.useState(monthNow);
+    const [activeCategory, setActiveCategory] = React.useState(0);
+    const [tasksPeriod, setTasksPeriod] = React.useState('date');
+    const [lastActiveDate, setLastActiveDate] = React.useState(null);
+    const { user } = React.useContext(UserContext);
+
+    const getFilteredTasks = ({ query = {} }) => {
+        const tasks = user.tasks;
+
         if (!tasks || !tasks.length) {
-            return null;
+            return [];
         };
         return tasks.filter(task => {
             return Object.keys(query).every((key) => {
@@ -51,116 +48,80 @@ class Todos extends Component {
         });
     }
 
-    setCalculatedState(state = this.state) {
-        const tasksPeriodFilter = this.getTasksPeriodFilter(new Date(this.year, state.activeMonth, state.activeDate), state.tasksPeriod);
-        const query = Object.assign({ categoryId: state.activeCategory }, tasksPeriodFilter);
-        this.filteredTasks = this.getFilteredTasks({ query, tasks: this.props.tasks });
+    const setCalculatedState = () => {
+        const tasksPeriodFilter = getTasksPeriodFilter(new Date(yearNow, activeMonth, activeDate));
+        const query = Object.assign({ categoryId: activeCategory }, tasksPeriodFilter);
+        filteredTasks = getFilteredTasks({ query });
     }
 
-    changeActiveDate(date) {
-        const state = Object.assign({}, this.state);
-        state.activeDate = date;
-        this.setCalculatedState(state);
-        this.setState(state);
-    }
-
-    changeActiveMonth(month) {
-        const state = Object.assign({}, this.state);
-        state.activeMonth = month;
-        if (month != new Date().getMonth()) {
-            if (!state.lastActiveDate) {
-                state.lastActiveDate = state.activeDate;
-            }
-            state.activeDate = 1;
+    const changeActiveMonth = (month) => {
+        setActiveMonth(month);
+        if (month != monthNow) {
+            if (activeMonth == monthNow) {
+                setLastActiveDate(activeDate);
+            };
+            setActiveDate(1);
         } else {
-            state.activeDate = state.lastActiveDate || new Date().getDate();
+            setActiveDate(lastActiveDate || date);
         };
-        this.setCalculatedState(state);
-        this.setState(state);
     }
 
-    removeCategory(id) {
-        const state = Object.assign({}, this.state);
-        const index = this.props.categories.findIndex(category => category.id === id);
+    const removeCategory = (id) => {
+        const index = user.categories.findIndex(category => category.id === id);
         if (index >= 0) {
             API.removeCategory(id);
-            this.props.tasks.forEach((task) => {
+            user.tasks.forEach((task) => {
                 if (task.categoryId == id) {
                     task.categoryId = null;
                     API.editTask(task);
                 };
-            })
-            state.activeCategory = 0;
-            this.setState(state);
-        }
+            });
+            setActiveCategory(0);
+        };
     }
 
-    removeTask(taskId) {
-        API.removeTask(taskId);
-    }
-
-    changeActiveCategory(categoryId) {
-        const state = Object.assign({}, this.state);
-        state.activeCategory = categoryId;
-        this.setCalculatedState(state);
-        this.setState(state);
-    }
-
-    getTasksPeriodFilter(date, period = this.state.tasksPeriod) {
-        if (period == 'date') {
+    const getTasksPeriodFilter = (date) => {
+        if (tasksPeriod == 'date') {
             return { date: date };
-        } else if (period == 'month') {
+        } else if (tasksPeriod == 'month') {
             return { month: date.getMonth() }
         } else return {};
     }
 
-    changeTasksPeriod(period) {
-        const state = Object.assign({}, this.state);
-        state.tasksPeriod = period;
-        this.setCalculatedState(state);
-        this.setState(state);
-    }
+    setCalculatedState();
 
-    changeTaskStatus(taskId) {
-        API.changeTaskStatus(taskId);
-    }
-
-    render() {
-        this.setCalculatedState();
-        return (
-            <Fragment>
-                <Calendar
-                    year={this.year}
-                    month={this.state.activeMonth}
-                    activeDate={this.state.activeDate}
-                    activeCategory={this.state.activeCategory}
-                    onDayClick={this.changeActiveDate}
-                    onMonthClick={this.changeActiveMonth}
-                    tasks={this.props.tasks}
-                />
-                <Categories
-                    year={this.year}
-                    categories={this.props.categories}
-                    tasks={this.props.tasks}
-                    month={this.state.activeMonth}
-                    activeDate={this.state.activeDate}
-                    tasksPeriod={this.state.tasksPeriod}
-                    removeCategory={this.removeCategory}
-                    changeActiveCategory={this.changeActiveCategory}
-                    activeCategory={this.state.activeCategory}
-                />
-                <Tasks
-                    tasks={this.filteredTasks}
-                    removeTask={this.removeTask}
-                    categories={this.props.categories}
-                    changeTasksPeriod={this.changeTasksPeriod}
-                    changeTaskStatus={this.changeTaskStatus}
-                    tasksPeriod={this.state.tasksPeriod}
-                />
-            </Fragment>
-        )
-    }
+    return (
+        <Fragment>
+            <Calendar
+                year={yearNow}
+                month={activeMonth}
+                activeDate={activeDate}
+                activeCategory={activeCategory}
+                onDayClick={setActiveDate}
+                onMonthClick={changeActiveMonth}
+                tasks={user.tasks||[]}
+            />
+            <Categories
+                year={yearNow}
+                categories={user.categories||[]}
+                tasks={user.tasks||[]}
+                month={activeMonth}
+                activeDate={activeDate}
+                tasksPeriod={tasksPeriod}
+                removeCategory={removeCategory}
+                changeActiveCategory={setActiveCategory}
+                activeCategory={activeCategory}
+            />
+            <Tasks
+                tasks={filteredTasks}
+                removeTask={API.removeTask}
+                categories={user.categories||[]}
+                changeTasksPeriod={setTasksPeriod}
+                changeTaskStatus={API.changeTaskStatus}
+                tasksPeriod={tasksPeriod}
+            />
+        </Fragment>
+    )
 }
 
-export default API.withSubscription(Todos);
 

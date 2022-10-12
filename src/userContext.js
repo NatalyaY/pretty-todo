@@ -1,25 +1,32 @@
 'use strict';
 import React from 'react';
-import { getUser as APIgetUser, editUser } from './routes/components/API';
+import * as API from './routes/helpers/API';
 
 export const UserContext = React.createContext({});
 
-export function getUser() {
-    return APIgetUser();
-};
 
 export const UserProvider = ({ children }) => {
-    const [user, setUser] = React.useState(getUser());
+    const [user, setUser] = React.useState({});
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    function saveUser(userProp) {
-        const newUser = { ...user, ...userProp };
-        editUser(newUser);
-        setUser(newUser);
+
+    React.useEffect(() => {
+        getUser();
+        API.subscribe(getUser);
+        return () => API.unSubscribe(getUser);
+    }, []);
+
+    const getUser = () => {
+        const user = API.getUser();
+        setUser(user);
+        setIsLoading(false);
     }
 
     return (
-        <UserContext.Provider value={{ user, saveUser }}>
-            {children}
+        <UserContext.Provider value={{ user, setUser }}>
+            {
+                isLoading && <i className="fa-solid fa-spinner fa-spin spinner"></i> || children
+            }
         </UserContext.Provider>
     )
 }
