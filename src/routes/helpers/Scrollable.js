@@ -71,7 +71,7 @@ export default function Scrollable(props) {
     }, [childrenWithProps]);
 
     useEffect(() => {
-        if (activeChildIndex) {
+        if (activeChildIndex != null) {
             scrollToActiveChild();
         };
     }, [activeChildIndex]);
